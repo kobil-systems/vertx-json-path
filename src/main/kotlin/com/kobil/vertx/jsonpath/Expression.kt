@@ -2,19 +2,20 @@ package com.kobil.vertx.jsonpath
 
 import arrow.core.Either
 import arrow.core.NonEmptyList
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.left
-import arrow.core.right
-import arrow.core.some
+import com.kobil.vertx.jsonpath.JsonNode.Companion.rootNode
 import com.kobil.vertx.jsonpath.compiler.JsonPathCompiler.compileJsonPathFilter
-import com.kobil.vertx.jsonpath.compiler.JsonPathCompiler.compileJsonPathQuery
 import com.kobil.vertx.jsonpath.compiler.Token
 import com.kobil.vertx.jsonpath.error.JsonPathError
-import com.kobil.vertx.jsonpath.error.MultipleResults
+import com.kobil.vertx.jsonpath.interpreter.match
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 
 sealed interface FilterExpression {
+  fun match(obj: JsonObject): Boolean = match(obj.rootNode)
+
+  fun match(arr: JsonArray): Boolean = match(arr.rootNode)
+
   data class And(
     val operands: NonEmptyList<FilterExpression>,
   ) : FilterExpression
@@ -46,6 +47,13 @@ sealed interface FilterExpression {
     val query: NodeListExpression,
   ) : FilterExpression
 
+  data class Match(
+    val subject: ComparableExpression,
+    val pattern: ComparableExpression,
+    val matchEntire: Boolean,
+    val token: Token? = null,
+  ) : FilterExpression
+
   companion object {
     suspend fun compile(
       vertx: Vertx,
@@ -56,53 +64,45 @@ sealed interface FilterExpression {
 
 sealed interface ComparableExpression {
   data class Literal(
-    val token: Token,
     val value: Any?,
+    val token: Token? = null,
   ) : ComparableExpression
 }
 
 sealed interface NodeListExpression : ComparableExpression
 
 sealed interface FunctionExpression : ComparableExpression {
-  val token: Token
+  val token: Token?
 
   data class Length(
-    override val token: Token,
     val arg: ComparableExpression,
+    override val token: Token? = null,
   ) : FunctionExpression
 
   data class Count(
-    override val token: Token,
     val arg: QueryExpression,
+    override val token: Token? = null,
   ) : FunctionExpression
 
-  data class Match(
-    override val token: Token,
-    val subject: ComparableExpression,
-    val pattern: ComparableExpression,
-    val full: Boolean = true,
-  ) : FunctionExpression,
-    FilterExpression
-
   data class Value(
-    override val token: Token,
     val arg: QueryExpression,
+    override val token: Token? = null,
   ) : FunctionExpression
 }
 
 sealed interface QueryExpression : NodeListExpression {
-  val token: Token
+  val token: Token?
   val segments: List<Segment>
   val isSingular: Boolean
     get() = segments.all { it.isSingular }
 
   data class Relative(
-    override val token: Token,
-    override val segments: List<Segment>,
+    override val segments: List<Segment> = listOf(),
+    override val token: Token? = null,
   ) : QueryExpression
 
   data class Absolute(
-    override val token: Token,
-    override val segments: List<Segment>,
+    override val segments: List<Segment> = listOf(),
+    override val token: Token? = null,
   ) : QueryExpression
 }

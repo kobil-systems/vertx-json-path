@@ -1,4 +1,7 @@
 package com.kobil.vertx.jsonpath.error
 
-data class MultipleResults(val results: List<Any?>)
+import com.kobil.vertx.jsonpath.JsonNode
 
+data class MultipleResults(
+  val results: List<JsonNode>,
+)

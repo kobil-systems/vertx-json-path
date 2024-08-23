@@ -1,13 +1,14 @@
 package com.kobil.vertx.jsonpath.interpreter
 
+import com.kobil.vertx.jsonpath.JsonNode
 import com.kobil.vertx.jsonpath.Selector
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
 fun Selector.select(
-  input: Any?,
-  root: Any?,
-): List<Any?> =
+  input: JsonNode,
+  root: JsonNode,
+): List<JsonNode> =
   when (this) {
     is Selector.Name -> select(input)
     is Selector.Index -> select(input)
@@ -16,35 +17,35 @@ fun Selector.select(
     is Selector.Filter -> select(input, root)
   }
 
-internal fun Selector.Name.select(input: Any?): List<Any?> =
-  (input as? JsonObject)?.let {
+internal fun Selector.Name.select(input: JsonNode): List<JsonNode> =
+  (input.value as? JsonObject)?.let {
     if (it.containsKey(name)) {
-      listOf(it.getValue(name))
+      listOf(input.child(name, it.getValue(name)))
     } else {
       emptyList()
     }
   } ?: emptyList()
 
-internal fun selectAll(input: Any?): List<Any?> =
-  when (input) {
-    is JsonObject -> input.map { it.value }
-    is JsonArray -> input.toList()
+internal fun selectAll(input: JsonNode): List<JsonNode> =
+  when (val node = input.value) {
+    is JsonObject -> node.map { input.child(it.key, it.value) }
+    is JsonArray -> node.mapIndexed { idx, item -> input.child(idx, item) }
     else -> emptyList()
   }
 
-internal fun Selector.Index.select(input: Any?): List<Any?> =
-  (input as? JsonArray)?.let { arr ->
+internal fun Selector.Index.select(input: JsonNode): List<JsonNode> =
+  (input.value as? JsonArray)?.let { arr ->
     val idx = index.normalizeIndex(arr.size())
 
     if (idx in 0..<arr.size()) {
-      listOf(arr.getValue(idx))
+      listOf(input.child(idx, arr.getValue(idx)))
     } else {
       emptyList()
     }
   } ?: emptyList()
 
-internal fun Selector.Slice.select(input: Any?): List<Any?> =
-  (input as? JsonArray)?.let { arr ->
+internal fun Selector.Slice.select(input: JsonNode): List<JsonNode> =
+  (input.value as? JsonArray)?.let { arr ->
     val len = arr.size()
     val step = step ?: 1
 
@@ -64,24 +65,35 @@ internal fun Selector.Slice.select(input: Any?): List<Any?> =
         minOf(maxOf(first?.normalizeIndex(len) ?: (len - 1), -1), len - 1)
       }
 
-    sequence {
-      var i = if (step > 0) lower else upper
-      val inBounds = { it: Int -> if (step > 0) it < upper else lower < it }
-
-      while (inBounds(i)) {
-        yield(arr.getValue(i))
-        i += step
+    val range =
+      if (step > 0) {
+        lower..<upper step step
+      } else {
+        upper downTo lower + 1 step -step
       }
-    }.toList()
+
+    range.map { i -> input.child(i, arr.getValue(i)) }
   } ?: emptyList()
 
 internal fun Selector.Filter.select(
-  input: Any?,
-  root: Any?,
-): List<Any?> =
-  when (input) {
-    is JsonObject -> input.map { it.value }.filter { filter.match(it, root) }
-    is JsonArray -> input.filter { filter.match(it, root) }
+  input: JsonNode,
+  root: JsonNode,
+): List<JsonNode> =
+  when (val value = input.value) {
+    is JsonObject ->
+      value
+        .asSequence()
+        .map { (key, field) -> input.child(key, field) }
+        .filter { node -> filter.match(node, root) }
+        .toList()
+
+    is JsonArray ->
+      value
+        .asSequence()
+        .mapIndexed { idx, item -> input.child(idx, item) }
+        .filter { node -> filter.match(node, root) }
+        .toList()
+
     else -> emptyList()
   }
 
@@ -91,3 +103,13 @@ internal fun Int.normalizeIndex(size: Int): Int =
   } else {
     toInt() + size
   }
+
+internal fun JsonNode.child(
+  name: String,
+  node: Any?,
+): JsonNode = JsonNode(node, path[name])
+
+internal fun JsonNode.child(
+  index: Int,
+  node: Any?,
+): JsonNode = JsonNode(node, path[index])

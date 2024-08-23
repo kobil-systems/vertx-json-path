@@ -7,6 +7,18 @@ sealed interface Segment {
   data class ChildSegment(
     override val selectors: List<Selector>,
   ) : Segment {
+    constructor(selector: Selector, vararg more: Selector) : this(listOf(selector, *more))
+
+    constructor(name: String, vararg more: String) : this(
+      Selector(name),
+      *more.map(Selector::invoke).toTypedArray(),
+    )
+
+    constructor(index: Int, vararg more: Int) : this(
+      Selector(index),
+      *more.map(Selector::invoke).toTypedArray(),
+    )
+
     override val isSingular: Boolean
       get() =
         selectors.size == 1 &&
@@ -16,6 +28,18 @@ sealed interface Segment {
   data class DescendantSegment(
     override val selectors: List<Selector>,
   ) : Segment {
+    constructor(selector: Selector, vararg more: Selector) : this(listOf(selector, *more))
+
+    constructor(name: String, vararg more: String) : this(
+      Selector(name),
+      *more.map(Selector::invoke).toTypedArray(),
+    )
+
+    constructor(index: Int, vararg more: Int) : this(
+      Selector(index),
+      *more.map(Selector::invoke).toTypedArray(),
+    )
+
     override val isSingular: Boolean
       get() = false
   }

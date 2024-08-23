@@ -3,15 +3,19 @@ package com.kobil.vertx.jsonpath.interpreter
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import arrow.core.getOrElse
+import com.kobil.vertx.jsonpath.ComparableExpression
 import com.kobil.vertx.jsonpath.FilterExpression
 import com.kobil.vertx.jsonpath.FunctionExpression
+import com.kobil.vertx.jsonpath.JsonNode
+import com.kobil.vertx.jsonpath.NodeListExpression
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.core.json.get
+import java.util.regex.PatternSyntaxException
 
 fun FilterExpression.match(
-  input: Any?,
-  root: Any? = input,
+  input: JsonNode,
+  root: JsonNode = input,
 ): Boolean =
   when (this) {
     is FilterExpression.And -> match(input, root)
@@ -19,28 +23,28 @@ fun FilterExpression.match(
     is FilterExpression.Not -> !operand.match(input, root)
     is FilterExpression.Comparison -> match(input, root)
     is FilterExpression.Existence -> match(input, root)
-    is FunctionExpression.Match -> match(input, root)
+    is FilterExpression.Match -> match(input, root)
   }
 
 internal fun FilterExpression.And.match(
-  input: Any?,
-  root: Any?,
+  input: JsonNode,
+  root: JsonNode,
 ): Boolean =
   operands.fold(true) { acc, operand ->
     acc && operand.match(input, root)
   }
 
 internal fun FilterExpression.Or.match(
-  input: Any?,
-  root: Any?,
+  input: JsonNode,
+  root: JsonNode,
 ): Boolean =
   operands.fold(false) { acc, operand ->
     acc || operand.match(input, root)
   }
 
 internal fun FilterExpression.Comparison.match(
-  input: Any?,
-  root: Any?,
+  input: JsonNode,
+  root: JsonNode,
 ): Boolean {
   val lhsVal = lhs.evaluate(input, root)
   val rhsVal = rhs.evaluate(input, root)
@@ -56,14 +60,43 @@ internal fun FilterExpression.Comparison.match(
 }
 
 internal fun FilterExpression.Existence.match(
-  input: Any?,
-  root: Any?,
+  input: JsonNode,
+  root: JsonNode,
 ): Boolean = query.evaluate(input, root).isNotEmpty()
 
-internal fun FunctionExpression.Match.match(
-  input: Any?,
-  root: Any?,
-): Boolean = evaluate(input, root).getOrElse { false }
+private val unescapedDot = """(?<!\\)(?<backslashes>(\\\\)*)\.(?![^]\n\r]*])""".toRegex()
+
+internal fun FilterExpression.Match.match(
+  input: JsonNode,
+  root: JsonNode,
+): Boolean {
+  val subjectStr =
+    when (subject) {
+      is ComparableExpression.Literal -> subject.value
+      is NodeListExpression -> subject.evaluate(input, root).takeIfSingular().getOrNull()
+      is FunctionExpression -> pattern.evaluate(input, root)
+    } as? String ?: return false
+
+  val patternStr =
+    when (pattern) {
+      is ComparableExpression.Literal -> pattern.value
+      is NodeListExpression -> pattern.evaluate(input, root).takeIfSingular().getOrNull()
+      is FunctionExpression -> pattern.evaluate(input, root).getOrNull()
+    } as? String ?: return false
+
+  val patternRegex =
+    try {
+      patternStr.replace(unescapedDot, """${"$"}{backslashes}[^\\n\\r]""").toRegex()
+    } catch (pse: PatternSyntaxException) {
+      return false
+    }
+
+  return if (matchEntire) {
+    patternRegex.matches(subjectStr)
+  } else {
+    patternRegex.containsMatchIn(subjectStr)
+  }
+}
 
 internal fun equals(
   lhs: Option<Any?>,
@@ -107,19 +140,12 @@ internal fun valuesEqual(
     is JsonArray ->
       rhsVal is JsonArray &&
         lhsVal.size() == rhsVal.size() &&
-        lhsVal
-          .zip(rhsVal)
-          .all { (l, r) -> valuesEqual(l, r) }
+        lhsVal.asSequence().zip(rhsVal.asSequence(), ::valuesEqual).all { it }
 
     is JsonObject ->
       rhsVal is JsonObject &&
         lhsVal.map.keys == rhsVal.map.keys &&
-        lhsVal.map.keys.all {
-          valuesEqual(
-            lhsVal.getValue(it),
-            rhsVal.getValue(it),
-          )
-        }
+        lhsVal.map.keys.all { valuesEqual(lhsVal[it], rhsVal[it]) }
 
     is List<*> ->
       if (lhsVal.isEmpty()) {
@@ -152,5 +178,12 @@ internal fun valueGreater(
     else -> false
   }
 
-internal fun replaceNodeListWithNode(maybeList: Any?): Any? =
-  (maybeList as? List<Any?>)?.takeIf { it.size == 1 }?.first() ?: maybeList
+internal fun replaceNodeListWithNode(maybeList: Any?): Any? {
+  val maybeNode =
+    (maybeList as? List<*>)
+      ?.takeIf { it.size == 1 }
+      ?.first()
+      as? JsonNode
+
+  return maybeNode ?: maybeList
+}

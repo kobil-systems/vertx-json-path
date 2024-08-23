@@ -1,12 +1,13 @@
 package com.kobil.vertx.jsonpath.error
 
 import com.kobil.vertx.jsonpath.compiler.Token
+import kotlinx.coroutines.CancellationException
 
 sealed interface JsonPathError {
   data class IllegalCharacter(
     val char: Char,
-    val line: Int,
-    val column: Int,
+    val line: UInt,
+    val column: UInt,
     val reason: String,
   ) : JsonPathError {
     override fun toString(): String =
@@ -14,10 +15,10 @@ sealed interface JsonPathError {
   }
 
   data class UnterminatedString(
-    val line: Int,
-    val column: Int,
-    val startLine: Int,
-    val startColumn: Int,
+    val line: UInt,
+    val column: UInt,
+    val startLine: UInt,
+    val startColumn: UInt,
   ) : JsonPathError {
     override fun toString(): String =
       "${messagePrefix(
@@ -31,12 +32,15 @@ sealed interface JsonPathError {
     val parsing: String,
   ) : JsonPathError {
     override fun toString(): String =
-      "${messagePrefix(token.line, token.column)}: Unexpected token while parsing $parsing"
+      "${messagePrefix(
+        token.line,
+        token.column,
+      )}: Unexpected token '${token.name}' while parsing $parsing"
   }
 
   data class IllegalSelector(
-    val line: Int,
-    val column: Int,
+    val line: UInt,
+    val column: UInt,
     val reason: String,
   ) : JsonPathError {
     override fun toString(): String = "${messagePrefix(line, column)}: Illegal selector ($reason)"
@@ -44,34 +48,25 @@ sealed interface JsonPathError {
 
   data class UnknownFunction(
     val name: String,
-    val line: Int,
-    val column: Int,
+    val line: UInt,
+    val column: UInt,
   ) : JsonPathError {
     override fun toString(): String =
       "${messagePrefix(line, column)}: Unknown function extension '$name'"
   }
 
   data class MustBeSingularQuery(
-    val line: Int,
-    val column: Int,
+    val line: UInt,
+    val column: UInt,
   ) : JsonPathError {
     override fun toString(): String = "${messagePrefix(line, column)}: A singular query is expected"
   }
 
-  data class IndicesMustBeIntegers(
-    val number: Number,
-    val line: Int,
-    val column: Int,
-  ) : JsonPathError {
-    override fun toString(): String =
-      "${messagePrefix(line, column)}: Expected an integer index, but got $number"
-  }
-
   data class InvalidEscapeSequence(
     val string: String,
-    val line: Int,
-    val column: Int,
-    val position: Int,
+    val line: UInt,
+    val column: UInt,
+    val position: UInt,
     val reason: String,
   ) : JsonPathError {
     override fun toString(): String =
@@ -89,12 +84,13 @@ sealed interface JsonPathError {
     operator fun invoke(throwable: Throwable): JsonPathError =
       when (throwable) {
         is JsonPathException -> throwable.err
+        is CancellationException, is Error -> throw throwable
         else -> UnexpectedError(throwable)
       }
 
     private fun messagePrefix(
-      line: Int,
-      column: Int,
+      line: UInt,
+      column: UInt,
     ): String = "Error at [$line:$column]"
   }
 }

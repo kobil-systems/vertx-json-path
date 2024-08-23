@@ -29,8 +29,7 @@ object JsonPathCompiler {
     queryCache
       .getIfPresent(jsonPath)
       ?: launchInScope {
-        JsonPathParser(JsonPathScanner(jsonPath), this)
-          .query()
+        jsonPath.scanTokens().parseJsonPathQuery()
       }.also { queryCache.put(jsonPath, it) }
 
   suspend fun Vertx.compileJsonPathFilter(
@@ -39,8 +38,7 @@ object JsonPathCompiler {
     filterCache
       .getIfPresent(filterExpression)
       ?: launchInScope {
-        JsonPathParser(JsonPathScanner(filterExpression), this)
-          .filterExpression()
+        filterExpression.scanTokens().parseJsonPathFilter()
       }.also { filterCache.put(filterExpression, it) }
 
   private suspend inline fun <T> Vertx.launchInScope(

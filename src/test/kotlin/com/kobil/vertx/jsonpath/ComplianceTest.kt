@@ -1,5 +1,6 @@
 package com.kobil.vertx.jsonpath
 
+import com.kobil.vertx.jsonpath.JsonPath.Companion.onlyValues
 import com.kobil.vertx.jsonpath.testing.ShouldSpecContext
 import com.kobil.vertx.jsonpath.testing.VertxExtension
 import com.kobil.vertx.jsonpath.testing.VertxExtension.Companion.vertx
@@ -62,8 +63,8 @@ class ComplianceTest :
 
                 val actual =
                   when (val d = test.document) {
-                    is JsonObject -> jsonPath.evaluate(d)
-                    is JsonArray -> jsonPath.evaluate(d)
+                    is JsonObject -> jsonPath.evaluate(d).onlyValues()
+                    is JsonArray -> jsonPath.evaluate(d).onlyValues()
                     else -> fail("Unsupported document $d")
                   }
 
@@ -81,8 +82,8 @@ class ComplianceTest :
 
                 val actual =
                   when (val d = test.document) {
-                    is JsonObject -> jsonPath.evaluate(d)
-                    is JsonArray -> jsonPath.evaluate(d)
+                    is JsonObject -> jsonPath.evaluate(d).onlyValues()
+                    is JsonArray -> jsonPath.evaluate(d).onlyValues()
                     else -> fail("Unsupported document $d")
                   }
 
