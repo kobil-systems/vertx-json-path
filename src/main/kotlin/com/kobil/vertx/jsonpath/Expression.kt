@@ -7,7 +7,6 @@ import com.kobil.vertx.jsonpath.compiler.JsonPathCompiler.compileJsonPathFilter
 import com.kobil.vertx.jsonpath.compiler.Token
 import com.kobil.vertx.jsonpath.error.JsonPathError
 import com.kobil.vertx.jsonpath.interpreter.match
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
@@ -55,10 +54,8 @@ sealed interface FilterExpression {
   ) : FilterExpression
 
   companion object {
-    suspend fun compile(
-      vertx: Vertx,
-      filterExpression: String,
-    ): Either<JsonPathError, FilterExpression> = vertx.compileJsonPathFilter(filterExpression)
+    fun compile(filterExpression: String): Either<JsonPathError, FilterExpression> =
+      compileJsonPathFilter(filterExpression)
   }
 }
 

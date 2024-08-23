@@ -70,6 +70,15 @@ class JsonPathErrorTest :
       }
     }
 
+    context("The 'PrematureEof' error") {
+      should("produce the correct message from toString") {
+        checkAll<String, UInt, UInt> { expected, line, col ->
+          JsonPathError.PrematureEof(expected, line, col).toString() shouldBe
+            "Error at [$line:$col]: Premature end of input, expected $expected"
+        }
+      }
+    }
+
     context("The 'IllegalCharacter' error") {
       should("produce the correct message from toString") {
         checkAll<Char, UInt, UInt, String> { ch, line, col, reason ->
@@ -84,6 +93,15 @@ class JsonPathErrorTest :
         checkAll<UInt, UInt, UInt, UInt> { line, col, startLine, startCol ->
           JsonPathError.UnterminatedString(line, col, startLine, startCol).toString() shouldBe
             "Error at [$line:$col]: Unterminated string literal starting at [$startLine:$startCol]"
+        }
+      }
+    }
+
+    context("The 'IntOutOfBounds' error") {
+      should("produce the correct message from toString") {
+        checkAll<String, UInt, UInt> { string, line, col ->
+          JsonPathError.IntOutOfBounds(string, line, col).toString() shouldBe
+            "Error at [$line:$col]: Invalid integer value (Out of bounds)"
         }
       }
     }

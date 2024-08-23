@@ -11,22 +11,16 @@ import com.kobil.vertx.jsonpath.compiler.JsonPathCompiler.compileJsonPathQuery
 import com.kobil.vertx.jsonpath.error.JsonPathError
 import com.kobil.vertx.jsonpath.error.MultipleResults
 import com.kobil.vertx.jsonpath.interpreter.evaluate
-import io.vertx.core.Vertx
-import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
+import io.vertx.core.json.impl.JsonUtil
 
 data class JsonPath internal constructor(
   val segments: List<Segment> = emptyList(),
 ) {
-  fun evaluate(obj: JsonObject): List<JsonNode> = segments.evaluate(obj.rootNode)
+  fun evaluate(subject: Any?): List<JsonNode> =
+    segments.evaluate(JsonUtil.wrapJsonValue(subject).rootNode)
 
-  fun evaluate(arr: JsonArray): List<JsonNode> = segments.evaluate(arr.rootNode)
-
-  fun evaluateSingle(obj: JsonObject): Either<MultipleResults, Option<JsonNode>> =
-    evaluate(obj).one()
-
-  fun evaluateSingle(arr: JsonArray): Either<MultipleResults, Option<JsonNode>> =
-    evaluate(arr).one()
+  fun evaluateOne(subject: Any?): Either<MultipleResults, Option<JsonNode>> =
+    evaluate(subject).one()
 
   operator fun get(
     selector: Selector,
@@ -46,10 +40,7 @@ data class JsonPath internal constructor(
   companion object {
     val root = JsonPath()
 
-    suspend fun compile(
-      vertx: Vertx,
-      jsonPath: String,
-    ): Either<JsonPathError, JsonPath> = vertx.compileJsonPathQuery(jsonPath)
+    fun compile(jsonPath: String): Either<JsonPathError, JsonPath> = compileJsonPathQuery(jsonPath)
 
     fun List<JsonNode>.one(): Either<MultipleResults, Option<JsonNode>> =
       when (size) {

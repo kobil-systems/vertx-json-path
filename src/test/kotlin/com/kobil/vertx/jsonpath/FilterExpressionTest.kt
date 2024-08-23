@@ -2,8 +2,6 @@ package com.kobil.vertx.jsonpath
 
 import com.kobil.vertx.jsonpath.compiler.Token
 import com.kobil.vertx.jsonpath.error.JsonPathError
-import com.kobil.vertx.jsonpath.testing.VertxExtension
-import com.kobil.vertx.jsonpath.testing.VertxExtension.Companion.vertx
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
@@ -14,8 +12,6 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 
 class FilterExpressionTest :
   ShouldSpec({
-    register(VertxExtension())
-
     context("Invalid filter expressions") {
       context("with a leading question mark") {
         should("result in an error when compiled") {
@@ -26,74 +22,74 @@ class FilterExpressionTest :
             )
 
           // Leading ? must be omitted
-          FilterExpression.compile(vertx, "?@") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?@.abc") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?!@") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?!@.abc") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?@ == 'x'") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?@.abc < 1U") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?@['xyz'] >= 'a'") shouldBeLeft unexpectedQuestion
-          FilterExpression.compile(vertx, "?@.abc != 2U") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@.abc") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?!@") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?!@.abc") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@ == 'x'") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@.abc < 1U") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@['xyz'] >= 'a'") shouldBeLeft unexpectedQuestion
+          FilterExpression.compile("?@.abc != 2U") shouldBeLeft unexpectedQuestion
         }
       }
 
       context("with a non-singular query as the operand of a comparison expression") {
         should("result in an error when compiled") {
-          FilterExpression.compile(vertx, "@..a == 2") shouldBeLeft
+          FilterExpression.compile("@..a == 2") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               1U,
             )
 
-          FilterExpression.compile(vertx, "2 == @..a") shouldBeLeft
-            JsonPathError.MustBeSingularQuery(
-              1U,
-              6U,
-            )
-
-          FilterExpression.compile(vertx, "@.a[1, 2] == 2") shouldBeLeft
-            JsonPathError.MustBeSingularQuery(
-              1U,
-              1U,
-            )
-
-          FilterExpression.compile(vertx, "2 == @.a[1, 2]") shouldBeLeft
+          FilterExpression.compile("2 == @..a") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               6U,
             )
 
-          FilterExpression.compile(vertx, "@.a['b', 'c'] == 2") shouldBeLeft
+          FilterExpression.compile("@.a[1, 2] == 2") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               1U,
             )
 
-          FilterExpression.compile(vertx, "2 == @.a['b', 'c']") shouldBeLeft
-            JsonPathError.MustBeSingularQuery(
-              1U,
-              6U,
-            )
-
-          FilterExpression.compile(vertx, "@.a[1:] == 2") shouldBeLeft
-            JsonPathError.MustBeSingularQuery(
-              1U,
-              1U,
-            )
-
-          FilterExpression.compile(vertx, "2 == @.a[1:]") shouldBeLeft
+          FilterExpression.compile("2 == @.a[1, 2]") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               6U,
             )
 
-          FilterExpression.compile(vertx, "@.a[?@.b == 1] == 2") shouldBeLeft
+          FilterExpression.compile("@.a['b', 'c'] == 2") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               1U,
             )
 
-          FilterExpression.compile(vertx, "2 == @.a[?@.b == 1]") shouldBeLeft
+          FilterExpression.compile("2 == @.a['b', 'c']") shouldBeLeft
+            JsonPathError.MustBeSingularQuery(
+              1U,
+              6U,
+            )
+
+          FilterExpression.compile("@.a[1:] == 2") shouldBeLeft
+            JsonPathError.MustBeSingularQuery(
+              1U,
+              1U,
+            )
+
+          FilterExpression.compile("2 == @.a[1:]") shouldBeLeft
+            JsonPathError.MustBeSingularQuery(
+              1U,
+              6U,
+            )
+
+          FilterExpression.compile("@.a[?@.b == 1] == 2") shouldBeLeft
+            JsonPathError.MustBeSingularQuery(
+              1U,
+              1U,
+            )
+
+          FilterExpression.compile("2 == @.a[?@.b == 1]") shouldBeLeft
             JsonPathError.MustBeSingularQuery(
               1U,
               6U,
@@ -114,31 +110,31 @@ class FilterExpressionTest :
         val hasNested1 = "@..[1]"
 
         should("compile successfully") {
-          FilterExpression.compile(vertx, hasA) shouldBeRight
+          FilterExpression.compile(hasA) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.ChildSegment("a")), at),
             )
 
-          FilterExpression.compile(vertx, hasB) shouldBeRight
+          FilterExpression.compile(hasB) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.ChildSegment("b")), at),
             )
 
-          FilterExpression.compile(vertx, has1) shouldBeRight
+          FilterExpression.compile(has1) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.ChildSegment(1)), at),
             )
-          FilterExpression.compile(vertx, hasNestedA) shouldBeRight
+          FilterExpression.compile(hasNestedA) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.DescendantSegment("a")), at),
             )
 
-          FilterExpression.compile(vertx, hasNestedB) shouldBeRight
+          FilterExpression.compile(hasNestedB) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.DescendantSegment("b")), at),
             )
 
-          FilterExpression.compile(vertx, hasNested1) shouldBeRight
+          FilterExpression.compile(hasNested1) shouldBeRight
             FilterExpression.Existence(
               QueryExpression.Relative(listOf(Segment.DescendantSegment(1)), at),
             )
@@ -157,7 +153,7 @@ class FilterExpressionTest :
             val arr3 = jsonArrayOf("a", "b", "c", "d")
             val arr4 = jsonArrayOf(1)
 
-            FilterExpression.compile(vertx, hasA).shouldBeRight().also {
+            FilterExpression.compile(hasA).shouldBeRight().also {
               it.match(obj1).shouldBeTrue()
               it.match(obj2).shouldBeFalse()
               it.match(obj3).shouldBeTrue()
@@ -168,7 +164,7 @@ class FilterExpressionTest :
               it.match(arr4).shouldBeFalse()
             }
 
-            FilterExpression.compile(vertx, hasB).shouldBeRight().also {
+            FilterExpression.compile(hasB).shouldBeRight().also {
               it.match(obj1).shouldBeFalse()
               it.match(obj2).shouldBeTrue()
               it.match(obj3).shouldBeTrue()
@@ -179,7 +175,7 @@ class FilterExpressionTest :
               it.match(arr4).shouldBeFalse()
             }
 
-            FilterExpression.compile(vertx, has1).shouldBeRight().also {
+            FilterExpression.compile(has1).shouldBeRight().also {
               it.match(obj1).shouldBeFalse()
               it.match(obj2).shouldBeFalse()
               it.match(obj3).shouldBeFalse()
@@ -214,7 +210,7 @@ class FilterExpressionTest :
             val arr3 = jsonArrayOf("a", "b", "c", "d")
             val arr4 = jsonArrayOf(jsonArrayOf("a", "b"))
 
-            FilterExpression.compile(vertx, hasNestedA).shouldBeRight().also {
+            FilterExpression.compile(hasNestedA).shouldBeRight().also {
               it.match(obj1).shouldBeTrue()
               it.match(obj2).shouldBeTrue()
               it.match(obj3).shouldBeTrue()
@@ -227,7 +223,7 @@ class FilterExpressionTest :
               it.match(arr4).shouldBeFalse()
             }
 
-            FilterExpression.compile(vertx, hasNestedB).shouldBeRight().also {
+            FilterExpression.compile(hasNestedB).shouldBeRight().also {
               it.match(obj1).shouldBeFalse()
               it.match(obj2).shouldBeTrue()
               it.match(obj3).shouldBeTrue()
@@ -240,7 +236,7 @@ class FilterExpressionTest :
               it.match(arr4).shouldBeFalse()
             }
 
-            FilterExpression.compile(vertx, hasNested1).shouldBeRight().also {
+            FilterExpression.compile(hasNested1).shouldBeRight().also {
               it.match(obj1).shouldBeFalse()
               it.match(obj2).shouldBeFalse()
               it.match(obj3).shouldBeFalse()

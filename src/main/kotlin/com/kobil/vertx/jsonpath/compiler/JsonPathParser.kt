@@ -14,52 +14,23 @@ import com.kobil.vertx.jsonpath.QueryExpression
 import com.kobil.vertx.jsonpath.Segment
 import com.kobil.vertx.jsonpath.Selector
 import com.kobil.vertx.jsonpath.error.JsonPathError
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
-import kotlin.coroutines.coroutineContext
 
-internal suspend fun Flow<Token>.parseJsonPathQuery(): Either<JsonPathError, JsonPath> =
+internal fun Sequence<TokenEvent>.parseJsonPathQuery(): Either<JsonPathError, JsonPath> =
   either {
-    val ch = collectIntoChannel()
-
-    try {
-      ParserState(ch, this).run {
-        require<Token.Dollar>("JSON path query")
-        JsonPath(segments())
-      }
-    } finally {
-      ch.cancel()
+    ParserState(iterator(), this).run {
+      require<Token.Dollar>("JSON path query")
+      JsonPath(segments())
     }
   }
 
-internal suspend fun Flow<Token>.parseJsonPathFilter(): Either<JsonPathError, FilterExpression> =
+internal fun Sequence<TokenEvent>.parseJsonPathFilter() =
   either {
-    val ch = collectIntoChannel()
-
-    try {
-      ParserState(ch, this).filterExpr()
-    } finally {
-      ch.cancel()
-    }
+    ParserState(iterator(), this).filterExpr()
   }
 
-private suspend fun Flow<Token>.collectIntoChannel(): ReceiveChannel<Token> =
-  Channel<Token>().also { ch ->
-    catch { ch.close(it) }
-      .onCompletion { ch.close(it) }
-      .onEach(ch::send)
-      .launchIn(CoroutineScope(coroutineContext))
-  }
+private fun ParserState.filterExpr() = or()
 
-private suspend fun ParserState.filterExpr() = or()
-
-private suspend fun ParserState.segments(): List<Segment> =
+private fun ParserState.segments(): List<Segment> =
   buildList {
     while (!isAtEnd()) {
       skipWhiteSpace()
@@ -76,15 +47,15 @@ private suspend fun ParserState.segments(): List<Segment> =
     }
   }.toList()
 
-private suspend fun ParserState.childSegment(dottedSegment: Boolean): Segment =
+private fun ParserState.childSegment(dottedSegment: Boolean): Segment =
   Segment.ChildSegment(selectors(dottedSegment, "child"))
 
-private suspend fun ParserState.descendantSegment(): Segment {
+private fun ParserState.descendantSegment(): Segment {
   val dottedSegment = !advanceIf<Token.LeftBracket>()
   return Segment.DescendantSegment(selectors(dottedSegment, "descendant"))
 }
 
-private suspend fun ParserState.selectors(
+private fun ParserState.selectors(
   dottedSegment: Boolean,
   segmentType: String,
 ): List<Selector> {
@@ -101,7 +72,7 @@ private suspend fun ParserState.selectors(
   return selectors.toList()
 }
 
-private suspend fun ParserState.selector(dottedSegment: Boolean): Selector =
+private fun ParserState.selector(dottedSegment: Boolean): Selector =
   when (val t = advance()) {
     is Token.Star -> Selector.Wildcard
 
@@ -210,14 +181,14 @@ private fun ParserState.checkInt(number: Token.Integer): Int {
   return number.value
 }
 
-private suspend fun ParserState.queryExpr(): QueryExpression =
+private fun ParserState.queryExpr(): QueryExpression =
   when (val t = advance()) {
     is Token.At -> QueryExpression.Relative(segments(), t)
     is Token.Dollar -> QueryExpression.Absolute(segments(), t)
     else -> unexpectedToken(t, "query expression")
   }
 
-private suspend inline fun <C : ComparableExpression> ParserState.functionExpr(
+private inline fun <C : ComparableExpression> ParserState.functionExpr(
   identifier: Token.Identifier,
   parse: ParserState.() -> C,
   constructor: (C, Token?) -> ComparableExpression,
@@ -232,7 +203,7 @@ private suspend inline fun <C : ComparableExpression> ParserState.functionExpr(
   return expr
 }
 
-private suspend fun ParserState.functionExpr(identifier: Token.Identifier): ComparableExpression =
+private fun ParserState.functionExpr(identifier: Token.Identifier): ComparableExpression =
   when (val name = identifier.value) {
     "length" -> functionExpr(identifier, { comparable() }, FunctionExpression::Length)
     "count" ->
@@ -248,7 +219,7 @@ private suspend fun ParserState.functionExpr(identifier: Token.Identifier): Comp
     else -> raise(JsonPathError.UnknownFunction(name, identifier.line, identifier.column))
   }
 
-private suspend fun ParserState.comparable(): ComparableExpression =
+private fun ParserState.comparable(): ComparableExpression =
   when (val t = advance()) {
     is Token.Integer -> ComparableExpression.Literal(t.value, t)
     is Token.Decimal -> ComparableExpression.Literal(t.value, t)
@@ -266,7 +237,7 @@ private suspend fun ParserState.comparable(): ComparableExpression =
     else -> unexpectedToken(t, "comparable expression")
   }
 
-private suspend fun ParserState.groupExpr(): FilterExpression {
+private fun ParserState.groupExpr(): FilterExpression {
   require<Token.LeftParen>("parenthesized expression")
   skipWhiteSpace()
   val expr = filterExpr()
@@ -276,13 +247,13 @@ private suspend fun ParserState.groupExpr(): FilterExpression {
   return expr
 }
 
-private suspend fun ParserState.notExpr(): FilterExpression {
+private fun ParserState.notExpr(): FilterExpression {
   require<Token.Bang>("not expression")
   skipWhiteSpace()
   return FilterExpression.Not(basicLogicalExpr())
 }
 
-private suspend fun ParserState.matchOrSearchFunction(): FilterExpression {
+private fun ParserState.matchOrSearchFunction(): FilterExpression {
   val identifier = require<Token.Identifier>("basic logical expression")
   val name = identifier.value
 
@@ -301,7 +272,7 @@ private suspend fun ParserState.matchOrSearchFunction(): FilterExpression {
   return FilterExpression.Match(firstArg, secondArg, name == "match", identifier)
 }
 
-private suspend fun ParserState.basicLogicalExpr(): FilterExpression {
+private fun ParserState.basicLogicalExpr(): FilterExpression {
   if (check<Token.Bang>()) {
     return notExpr()
   } else if (check<Token.LeftParen>()) {
@@ -352,7 +323,7 @@ private fun Raise<JsonPathError.MustBeSingularQuery>.checkSingular(
     }
   }
 
-private suspend fun ParserState.and(): FilterExpression {
+private fun ParserState.and(): FilterExpression {
   var expr = basicLogicalExpr()
   skipWhiteSpace()
 
@@ -371,7 +342,7 @@ private suspend fun ParserState.and(): FilterExpression {
   return expr
 }
 
-private suspend fun ParserState.or(): FilterExpression {
+private fun ParserState.or(): FilterExpression {
   var expr = and()
   skipWhiteSpace()
 
@@ -392,25 +363,25 @@ private suspend fun ParserState.or(): FilterExpression {
   return expr
 }
 
-private suspend fun ParserState.skipWhiteSpace() {
+private fun ParserState.skipWhiteSpace() {
   while (advanceIf<Token.Whitespace>()) {
     // Drop all whitespace tokens
   }
 }
 
-private suspend fun ParserState.peek(): Token =
+private fun ParserState.peek(): Token =
   current ?: run {
-    val first = receiveToken()!!
+    val first = receiveToken()
     current = first
     first
   }
 
-private suspend fun ParserState.advance(): Token =
+private fun ParserState.advance(): Token =
   peek().also {
-    current = receiveToken()
+    if (!isAtEnd()) current = receiveToken()
   }
 
-private suspend inline fun <reified T : Token> ParserState.advanceIf(): Boolean {
+private inline fun <reified T : Token> ParserState.advanceIf(): Boolean {
   if (check<T>()) {
     advance()
     return true
@@ -419,7 +390,7 @@ private suspend inline fun <reified T : Token> ParserState.advanceIf(): Boolean 
   return false
 }
 
-private suspend inline fun <reified T> ParserState.takeIf(): T? {
+private inline fun <reified T> ParserState.takeIf(): T? {
   if (check<T>()) {
     return advance() as T
   }
@@ -427,27 +398,20 @@ private suspend inline fun <reified T> ParserState.takeIf(): T? {
   return null
 }
 
-private suspend inline fun <reified T : Token> ParserState.require(parsing: String): T =
+private inline fun <reified T : Token> ParserState.require(parsing: String): T =
   takeIf<T>() ?: unexpectedToken(peek(), parsing)
 
-private suspend inline fun <reified T> ParserState.check(): Boolean = peek() is T
+private inline fun <reified T> ParserState.check(): Boolean = peek() is T
 
-private suspend fun ParserState.isAtEnd(): Boolean = check<Token.Eof>()
+private fun ParserState.isAtEnd(): Boolean = check<Token.Eof>()
 
 private class ParserState(
-  tokens: ReceiveChannel<Token>,
+  tokens: Iterator<Either<JsonPathError, Token>>,
   raise: Raise<JsonPathError>,
   var current: Token? = null,
 ) : Raise<JsonPathError> by raise,
-  ReceiveChannel<Token> by tokens {
-  suspend fun receiveToken(): Token? =
-    receiveCatching().let {
-      when {
-        it.isClosed -> it.exceptionOrNull()?.let { t -> raise(JsonPathError(t)) }
-        it.isSuccess -> it.getOrThrow()
-        else -> error("Unexpected Failed channel result")
-      }
-    }
+  Iterator<Either<JsonPathError, Token>> by tokens {
+  fun receiveToken(): Token = next().bind()
 }
 
 private fun ParserState.unexpectedToken(

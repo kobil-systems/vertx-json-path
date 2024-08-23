@@ -4,6 +4,15 @@ import com.kobil.vertx.jsonpath.compiler.Token
 import kotlinx.coroutines.CancellationException
 
 sealed interface JsonPathError {
+  data class PrematureEof(
+    val expected: String,
+    val line: UInt,
+    val column: UInt,
+  ) : JsonPathError {
+    override fun toString(): String =
+      "${messagePrefix(line, column)}: Premature end of input, expected $expected"
+  }
+
   data class IllegalCharacter(
     val char: Char,
     val line: UInt,
@@ -25,6 +34,18 @@ sealed interface JsonPathError {
         line,
         column,
       )}: Unterminated string literal starting at [$startLine:$startColumn]"
+  }
+
+  data class IntOutOfBounds(
+    val string: String,
+    val line: UInt,
+    val column: UInt,
+  ) : JsonPathError {
+    override fun toString(): String =
+      "${messagePrefix(
+        line,
+        column,
+      )}: Invalid integer value (Out of bounds)"
   }
 
   data class UnexpectedToken(

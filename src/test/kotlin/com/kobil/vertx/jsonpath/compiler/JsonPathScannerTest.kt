@@ -1,5 +1,6 @@
 package com.kobil.vertx.jsonpath.compiler
 
+import arrow.core.right
 import com.kobil.vertx.jsonpath.testing.nameChar
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -9,13 +10,12 @@ import io.kotest.property.arbitrary.az
 import io.kotest.property.arbitrary.of
 import io.kotest.property.arbitrary.string
 import io.kotest.property.checkAll
-import kotlinx.coroutines.flow.toList
 
 class JsonPathScannerTest :
   ShouldSpec({
     context("When called on an empty string") {
       should("only return an EOF token") {
-        "".scanTokens().toList() shouldBe listOf(Token.Eof(1U, 1U))
+        "".scanTokens().toList() shouldBe listOf(Token.Eof(1U, 1U).right())
       }
     }
 
@@ -29,10 +29,10 @@ class JsonPathScannerTest :
 
           "$.$name".scanTokens().toList() shouldBe
             listOf(
-              Token.Dollar(1U, 1U),
-              Token.Dot(1U, 2U),
-              Token.Identifier(1U, 3U, name),
-              Token.Eof(1U, name.length.toUInt() + 3U),
+              Token.Dollar(1U, 1U).right(),
+              Token.Dot(1U, 2U).right(),
+              Token.Identifier(1U, 3U, name).right(),
+              Token.Eof(1U, name.length.toUInt() + 3U).right(),
             )
         }
       }
@@ -45,10 +45,10 @@ class JsonPathScannerTest :
 
           "$.$name".scanTokens().toList() shouldBe
             listOf(
-              Token.Dollar(1U, 1U),
-              Token.Dot(1U, 2U),
-              Token.Identifier(1U, 3U, name),
-              Token.Eof(1U, name.length.toUInt() + 3U),
+              Token.Dollar(1U, 1U).right(),
+              Token.Dot(1U, 2U).right(),
+              Token.Identifier(1U, 3U, name).right(),
+              Token.Eof(1U, name.length.toUInt() + 3U).right(),
             )
         }
       }
@@ -59,10 +59,10 @@ class JsonPathScannerTest :
 
           "$.$name".scanTokens().toList() shouldBe
             listOf(
-              Token.Dollar(1U, 1U),
-              Token.Dot(1U, 2U),
-              Token.Identifier(1U, 3U, name),
-              Token.Eof(1U, name.length.toUInt() + 3U),
+              Token.Dollar(1U, 1U).right(),
+              Token.Dot(1U, 2U).right(),
+              Token.Identifier(1U, 3U, name).right(),
+              Token.Eof(1U, name.length.toUInt() + 3U).right(),
             )
         }
       }
@@ -76,10 +76,10 @@ class JsonPathScannerTest :
 
           "$.$name".scanTokens().toList() shouldBe
             listOf(
-              Token.Dollar(1U, 1U),
-              Token.Dot(1U, 2U),
-              Token.Identifier(1U, 3U, name),
-              Token.Eof(1U, name.length.toUInt() + 3U),
+              Token.Dollar(1U, 1U).right(),
+              Token.Dot(1U, 2U).right(),
+              Token.Identifier(1U, 3U, name).right(),
+              Token.Eof(1U, name.length.toUInt() + 3U).right(),
             )
         }
       }
@@ -93,10 +93,10 @@ class JsonPathScannerTest :
 
           "$.$name".scanTokens().toList() shouldBe
             listOf(
-              Token.Dollar(1U, 1U),
-              Token.Dot(1U, 2U),
-              Token.Identifier(1U, 3U, name),
-              Token.Eof(1U, name.length.toUInt() + 3U),
+              Token.Dollar(1U, 1U).right(),
+              Token.Dot(1U, 2U).right(),
+              Token.Identifier(1U, 3U, name).right(),
+              Token.Eof(1U, name.length.toUInt() + 3U).right(),
             )
         }
       }

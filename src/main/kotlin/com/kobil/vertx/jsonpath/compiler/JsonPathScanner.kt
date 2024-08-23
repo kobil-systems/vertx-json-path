@@ -1,18 +1,19 @@
 package com.kobil.vertx.jsonpath.compiler
 
+import arrow.core.Either
+import arrow.core.left
 import arrow.core.raise.Raise
 import arrow.core.raise.recover
+import arrow.core.right
 import com.kobil.vertx.jsonpath.error.JsonPathError
-import com.kobil.vertx.jsonpath.error.JsonPathException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.flow
 
-internal fun String.scanTokens(): Flow<Token> =
-  flow {
+internal typealias TokenEvent = Either<JsonPathError, Token>
+
+internal fun String.scanTokens(): Sequence<TokenEvent> =
+  sequence {
     recover(
       block = {
-        val scannerState = ScannerState(this@scanTokens, this@flow, this)
+        val scannerState = ScannerState(this@scanTokens, this)
 
         if (firstOrNull() in whitespaceChar) {
           this.raise(
@@ -29,7 +30,7 @@ internal fun String.scanTokens(): Flow<Token> =
           scannerState.start = scannerState.current
           scannerState.startLine = scannerState.line
           scannerState.startColumn = scannerState.column
-          emit(scannerState.scanToken())
+          yield(scannerState.scanToken().right())
         }
 
         if (lastOrNull() in whitespaceChar) {
@@ -45,10 +46,10 @@ internal fun String.scanTokens(): Flow<Token> =
 
         scannerState.start = scannerState.current
 
-        emit(Token.Eof(scannerState.line, scannerState.column))
+        yield(Token.Eof(scannerState.line, scannerState.column).right())
       },
       recover = {
-        throw JsonPathException(it)
+        yield(it.left())
       },
     )
   }
@@ -153,7 +154,14 @@ private fun ScannerState.scanNumber(first: Char): Token {
     return scanScientificNotation()
   }
 
-  return Token.Integer(line, column, negative, expr.substring(start..<current).toInt())
+  val strValue = expr.substring(start..<current)
+
+  return Token.Integer(
+    line,
+    column,
+    negative,
+    strValue.toIntOrNull() ?: raise(JsonPathError.IntOutOfBounds(strValue, line, column)),
+  )
 }
 
 private fun ScannerState.scanDecimalPart(): Token.Decimal {
@@ -273,6 +281,8 @@ private fun ScannerState.expect(
 ): Token =
   if (advanceIf(next)) {
     ifMatch()
+  } else if (isAtEnd()) {
+    raise(JsonPathError.PrematureEof("'$next'", line, column))
   } else {
     raise(JsonPathError.IllegalCharacter(expr[current], line, column, "Expected '$next'"))
   }
@@ -295,7 +305,6 @@ private val String.uLength: UInt
 
 private class ScannerState(
   var expr: String,
-  flow: FlowCollector<Token>,
   raise: Raise<JsonPathError>,
   var start: UInt = 0U,
   var current: UInt = 0U,
@@ -303,8 +312,7 @@ private class ScannerState(
   var currentLineStart: UInt = 0U,
   var startLine: UInt = 1U,
   var startColumn: UInt = 1U,
-) : Raise<JsonPathError> by raise,
-  FlowCollector<Token> by flow
+) : Raise<JsonPathError> by raise
 
 private val identifierChar =
   ('A'..'Z').toSet() + ('a'..'z') + '_' + ('\u0080'..'\ud7ff') + ('\ue000'..'\uffff') +

@@ -45,7 +45,7 @@ class ComplianceTest :
         if (test.isInvalid) {
           ctx(test.name) {
             should("yield an error when compiled") {
-              JsonPath.compile(vertx, test.selector).shouldBeLeft()
+              JsonPath.compile(test.selector).shouldBeLeft()
             }
           }
         } else {
@@ -55,11 +55,11 @@ class ComplianceTest :
           if (result != null) {
             ctx(test.name) {
               should("compile to a valid JSON path") {
-                JsonPath.compile(vertx, test.selector).shouldBeRight()
+                JsonPath.compile(test.selector).shouldBeRight()
               }
 
               should("yield the expected results") {
-                val jsonPath = JsonPath.compile(vertx, test.selector).shouldBeRight()
+                val jsonPath = JsonPath.compile(test.selector).shouldBeRight()
 
                 val actual =
                   when (val d = test.document) {
@@ -74,11 +74,11 @@ class ComplianceTest :
           } else if (results != null) {
             ctx(test.name) {
               should("compile to a valid JSON path") {
-                JsonPath.compile(vertx, test.selector).shouldBeRight()
+                JsonPath.compile(test.selector).shouldBeRight()
               }
 
               should("yield the expected results") {
-                val jsonPath = JsonPath.compile(vertx, test.selector).shouldBeRight()
+                val jsonPath = JsonPath.compile(test.selector).shouldBeRight()
 
                 val actual =
                   when (val d = test.document) {

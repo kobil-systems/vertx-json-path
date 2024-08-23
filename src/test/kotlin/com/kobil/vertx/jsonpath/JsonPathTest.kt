@@ -1,8 +1,6 @@
 package com.kobil.vertx.jsonpath
 
 import com.kobil.vertx.jsonpath.JsonPath.Companion.onlyPaths
-import com.kobil.vertx.jsonpath.testing.VertxExtension
-import com.kobil.vertx.jsonpath.testing.VertxExtension.Companion.vertx
 import com.kobil.vertx.jsonpath.testing.normalizedJsonPath
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeNone
@@ -19,60 +17,67 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 
 class JsonPathTest :
   ShouldSpec({
-    register(VertxExtension())
-
     context("The evaluateSingle function") {
       context("called on a JSON object") {
         should("return the single result if there is exactly one") {
-          val jsonPath1 = JsonPath.compile(vertx, "$.a").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$.a[1]['b']").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$.a").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$.a[1]['b']").shouldBeRight()
 
           jsonPath1
-            .evaluateSingle(jsonObjectOf("a" to 1, "b" to 2))
+            .evaluateOne(jsonObjectOf("a" to 1, "b" to 2))
             .shouldBeRight() shouldBeSome JsonNode(1, JsonPath["a"])
+          jsonObjectOf("a" to 1, "b" to 2)
+            .get<Int>(jsonPath1)
+            .shouldBeRight() shouldBeSome 1
 
           jsonPath1
-            .evaluateSingle(jsonObjectOf("a" to "string"))
+            .evaluateOne(jsonObjectOf("a" to "string"))
             .shouldBeRight() shouldBeSome JsonNode("string", JsonPath["a"])
+          jsonObjectOf("a" to "string")
+            .get<String>(jsonPath1)
+            .shouldBeRight() shouldBeSome "string"
 
           jsonPath2
-            .evaluateSingle(jsonObjectOf("a" to jsonArrayOf(null, jsonObjectOf("b" to true))))
+            .evaluateOne(jsonObjectOf("a" to jsonArrayOf(null, jsonObjectOf("b" to true))))
             .shouldBeRight() shouldBeSome JsonNode(true, JsonPath["a"][1]["b"])
+          jsonObjectOf("a" to jsonArrayOf(null, jsonObjectOf("b" to true)))
+            .get<Boolean>(jsonPath2)
+            .shouldBeRight() shouldBeSome true
         }
 
         should("return None if there is no result") {
-          val jsonPath1 = JsonPath.compile(vertx, "$.a").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$.a[1]['b']").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$.a").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$.a[1]['b']").shouldBeRight()
 
-          jsonPath1.evaluateSingle(jsonObjectOf("b" to 2)).shouldBeRight().shouldBeNone()
+          jsonPath1.evaluateOne(jsonObjectOf("b" to 2)).shouldBeRight().shouldBeNone()
 
           jsonPath1
-            .evaluateSingle(jsonObjectOf("b" to jsonObjectOf("a" to 1)))
+            .evaluateOne(jsonObjectOf("b" to jsonObjectOf("a" to 1)))
             .shouldBeRight()
             .shouldBeNone()
 
           jsonPath2
-            .evaluateSingle(jsonObjectOf("b" to jsonArrayOf(null, jsonObjectOf("b" to true))))
+            .evaluateOne(jsonObjectOf("b" to jsonArrayOf(null, jsonObjectOf("b" to true))))
             .shouldBeRight()
             .shouldBeNone()
 
           jsonPath2
-            .evaluateSingle(jsonObjectOf("a" to jsonArrayOf(jsonObjectOf("b" to true))))
+            .evaluateOne(jsonObjectOf("a" to jsonArrayOf(jsonObjectOf("b" to true))))
             .shouldBeRight()
             .shouldBeNone()
 
           jsonPath2
-            .evaluateSingle(jsonObjectOf("a" to jsonArrayOf(null, jsonObjectOf("a" to true))))
+            .evaluateOne(jsonObjectOf("a" to jsonArrayOf(null, jsonObjectOf("a" to true))))
             .shouldBeRight()
             .shouldBeNone()
         }
 
         should("return an error if there are multiple results") {
-          val jsonPath1 = JsonPath.compile(vertx, "$..a").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$[?@.a]").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$..a").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$[?@.a]").shouldBeRight()
 
           jsonPath1
-            .evaluateSingle(
+            .evaluateOne(
               jsonObjectOf(
                 "a" to 1,
                 "b" to jsonObjectOf("a" to 2),
@@ -87,7 +92,7 @@ class JsonPathTest :
             )
 
           jsonPath1
-            .evaluateSingle(jsonObjectOf("a" to "string", "b" to jsonObjectOf("a" to null)))
+            .evaluateOne(jsonObjectOf("a" to "string", "b" to jsonObjectOf("a" to null)))
             .shouldBeLeft()
             .results
             .shouldContainExactlyInAnyOrder(
@@ -96,7 +101,7 @@ class JsonPathTest :
             )
 
           jsonPath2
-            .evaluateSingle(
+            .evaluateOne(
               jsonObjectOf(
                 "a" to jsonObjectOf("a" to 1),
                 "b" to jsonObjectOf("a" to 2),
@@ -112,45 +117,45 @@ class JsonPathTest :
 
       context("called on a JSON array") {
         should("return the single result if there is exactly one") {
-          val jsonPath1 = JsonPath.compile(vertx, "$[0]").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$[1]['b']").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$[0]").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$[1]['b']").shouldBeRight()
 
           jsonPath1
-            .evaluateSingle(jsonArrayOf(1, 2, 3))
+            .evaluateOne(jsonArrayOf(1, 2, 3))
             .shouldBeRight() shouldBeSome JsonNode(1, JsonPath[0])
 
           jsonPath1
-            .evaluateSingle(jsonArrayOf("string", null, true))
+            .evaluateOne(jsonArrayOf("string", null, true))
             .shouldBeRight() shouldBeSome JsonNode("string", JsonPath[0])
 
           jsonPath2
-            .evaluateSingle(jsonArrayOf(null, jsonObjectOf("b" to true)))
+            .evaluateOne(jsonArrayOf(null, jsonObjectOf("b" to true)))
             .shouldBeRight() shouldBeSome JsonNode(true, JsonPath[1]["b"])
         }
 
         should("return None if there is no result") {
-          val jsonPath1 = JsonPath.compile(vertx, "$[0]").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$[1]['b']").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$[0]").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$[1]['b']").shouldBeRight()
 
-          jsonPath1.evaluateSingle(jsonArrayOf()).shouldBeRight().shouldBeNone()
+          jsonPath1.evaluateOne(jsonArrayOf()).shouldBeRight().shouldBeNone()
 
           jsonPath2
-            .evaluateSingle(jsonArrayOf(null, jsonObjectOf("a" to true)))
+            .evaluateOne(jsonArrayOf(null, jsonObjectOf("a" to true)))
             .shouldBeRight()
             .shouldBeNone()
 
           jsonPath2
-            .evaluateSingle(jsonArrayOf(jsonObjectOf("b" to true)))
+            .evaluateOne(jsonArrayOf(jsonObjectOf("b" to true)))
             .shouldBeRight()
             .shouldBeNone()
         }
 
         should("return an error if there are multiple results") {
-          val jsonPath1 = JsonPath.compile(vertx, "$..a").shouldBeRight()
-          val jsonPath2 = JsonPath.compile(vertx, "$[?@.a]").shouldBeRight()
+          val jsonPath1 = JsonPath.compile("$..a").shouldBeRight()
+          val jsonPath2 = JsonPath.compile("$[?@.a]").shouldBeRight()
 
           jsonPath1
-            .evaluateSingle(
+            .evaluateOne(
               jsonArrayOf(
                 jsonObjectOf("a" to 2),
                 jsonArrayOf(1, jsonObjectOf("a" to 3)),
@@ -163,7 +168,7 @@ class JsonPathTest :
             )
 
           jsonPath2
-            .evaluateSingle(
+            .evaluateOne(
               jsonArrayOf(
                 jsonObjectOf("a" to 1),
                 true,
