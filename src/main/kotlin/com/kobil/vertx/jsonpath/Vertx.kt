@@ -6,7 +6,6 @@ import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
-import com.kobil.vertx.jsonpath.JsonPath.Companion.onlyPaths
 import com.kobil.vertx.jsonpath.JsonPath.Companion.onlyValues
 import com.kobil.vertx.jsonpath.error.MultipleResults
 import com.kobil.vertx.jsonpath.error.RequiredJsonValueError
@@ -46,11 +45,11 @@ inline fun <reified T> JsonArray.getAll(path: JsonPath): List<T> =
   path.evaluate(this).onlyValues().map { it as T }
 
 fun JsonObject.traceOne(path: JsonPath): Either<MultipleResults, Option<JsonPath>> =
-  path.evaluateOne(this).map { node -> node.map(JsonNode::path) }
+  path.traceOne(this)
 
 fun JsonArray.traceOne(path: JsonPath): Either<MultipleResults, Option<JsonPath>> =
-  path.evaluateOne(this).map { node -> node.map(JsonNode::path) }
+  path.traceOne(this)
 
-fun JsonObject.traceAll(path: JsonPath): List<JsonPath> = path.evaluate(this).onlyPaths()
+fun JsonObject.traceAll(path: JsonPath): List<JsonPath> = path.traceAll(this)
 
-fun JsonArray.traceAll(path: JsonPath): List<JsonPath> = path.evaluate(this).onlyPaths()
+fun JsonArray.traceAll(path: JsonPath): List<JsonPath> = path.traceAll(this)

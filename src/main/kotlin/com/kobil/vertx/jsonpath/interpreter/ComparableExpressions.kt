@@ -21,7 +21,7 @@ internal fun ComparableExpression.evaluate(
     is FunctionExpression.Length -> evaluate(input, root)
     is FunctionExpression.Count -> evaluate(input, root)
     is FunctionExpression.Value -> evaluate(input, root)
-    is QueryExpression -> evaluate(input, root).takeIfSingular()
+    is QueryExpression<*> -> evaluate(input, root).takeIfSingular()
   }
 
 internal fun FunctionExpression.Length.evaluate(
@@ -56,10 +56,10 @@ internal fun NodeListExpression.evaluate(
   root: JsonNode,
 ): List<Any?> =
   when (this) {
-    is QueryExpression -> evaluate(input, root)
+    is QueryExpression<*> -> evaluate(input, root)
   }
 
-internal fun QueryExpression.evaluate(
+internal fun QueryExpression<*>.evaluate(
   input: JsonNode,
   root: JsonNode,
 ): List<Any?> =

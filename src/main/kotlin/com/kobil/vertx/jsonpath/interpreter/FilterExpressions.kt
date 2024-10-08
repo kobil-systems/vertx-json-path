@@ -13,36 +13,36 @@ import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.get
 import java.util.regex.PatternSyntaxException
 
-fun FilterExpression.match(
+fun FilterExpression.test(
   input: JsonNode,
   root: JsonNode = input,
 ): Boolean =
   when (this) {
-    is FilterExpression.And -> match(input, root)
-    is FilterExpression.Or -> match(input, root)
-    is FilterExpression.Not -> !operand.match(input, root)
-    is FilterExpression.Comparison -> match(input, root)
-    is FilterExpression.Existence -> match(input, root)
-    is FilterExpression.Match -> match(input, root)
+    is FilterExpression.And -> this@test.test(input, root)
+    is FilterExpression.Or -> this@test.test(input, root)
+    is FilterExpression.Not -> !operand.test(input, root)
+    is FilterExpression.Comparison -> this@test.test(input, root)
+    is FilterExpression.Existence -> this@test.test(input, root)
+    is FilterExpression.Match -> this@test.test(input, root)
   }
 
-internal fun FilterExpression.And.match(
+internal fun FilterExpression.And.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean =
   operands.fold(true) { acc, operand ->
-    acc && operand.match(input, root)
+    acc && operand.test(input, root)
   }
 
-internal fun FilterExpression.Or.match(
+internal fun FilterExpression.Or.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean =
   operands.fold(false) { acc, operand ->
-    acc || operand.match(input, root)
+    acc || operand.test(input, root)
   }
 
-internal fun FilterExpression.Comparison.match(
+internal fun FilterExpression.Comparison.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean {
@@ -59,14 +59,14 @@ internal fun FilterExpression.Comparison.match(
   }
 }
 
-internal fun FilterExpression.Existence.match(
+internal fun FilterExpression.Existence.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean = query.evaluate(input, root).isNotEmpty()
 
 private val unescapedDot = """(?<!\\)(?<backslashes>(\\\\)*)\.(?![^]\n\r]*])""".toRegex()
 
-internal fun FilterExpression.Match.match(
+internal fun FilterExpression.Match.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean {

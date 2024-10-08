@@ -19,6 +19,7 @@ val caffeineVersion: String by project
 val kotlinCoroutinesVersion: String by project
 val vertxVersion: String by project
 
+val junitJupiterVersion: String by project
 val kotestVersion: String by project
 val kotestArrowVersion: String by project
 
@@ -41,6 +42,8 @@ dependencies {
   testImplementation("io.kotest:kotest-assertions-core")
   testImplementation("io.kotest:kotest-property")
   testImplementation("io.kotest.extensions:kotest-assertions-arrow:$kotestArrowVersion")
+
+  testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
 }
 
 tasks.test {
@@ -55,4 +58,14 @@ kotlin {
 
 ktlint {
   version.set("1.3.1")
+}
+
+kover {
+  reports {
+    filters {
+      excludes {
+        classes("com.kobil.vertx.jsonpath.Build", "com.kobil.vertx.jsonpath.Compile")
+      }
+    }
+  }
 }

@@ -5,7 +5,8 @@ data class JsonNode(
   val path: JsonPath,
 ) {
   companion object {
-    fun root(value: Any?): JsonNode = JsonNode(value, JsonPath.root)
+    @JvmStatic
+    fun root(value: Any?): JsonNode = JsonNode(value, JsonPath.ROOT)
 
     val Any?.rootNode: JsonNode
       get() = root(this)

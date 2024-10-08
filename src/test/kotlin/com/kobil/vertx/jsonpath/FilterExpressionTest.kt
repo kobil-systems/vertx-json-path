@@ -1,14 +1,32 @@
 package com.kobil.vertx.jsonpath
 
+import arrow.core.nonEmptyListOf
+import com.kobil.vertx.jsonpath.ComparableExpression.Literal
+import com.kobil.vertx.jsonpath.FilterExpression.And
+import com.kobil.vertx.jsonpath.FilterExpression.Comparison
+import com.kobil.vertx.jsonpath.FilterExpression.Comparison.Op
+import com.kobil.vertx.jsonpath.FilterExpression.Existence
+import com.kobil.vertx.jsonpath.FilterExpression.Match
+import com.kobil.vertx.jsonpath.FilterExpression.Not
+import com.kobil.vertx.jsonpath.FilterExpression.Or
+import com.kobil.vertx.jsonpath.QueryExpression.Absolute
+import com.kobil.vertx.jsonpath.QueryExpression.Relative
 import com.kobil.vertx.jsonpath.compiler.Token
 import com.kobil.vertx.jsonpath.error.JsonPathError
+import com.kobil.vertx.jsonpath.testing.comparable
+import com.kobil.vertx.jsonpath.testing.matchOperand
+import com.kobil.vertx.jsonpath.testing.queryExpression
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
+import io.kotest.property.Arb
+import io.kotest.property.checkAll
 import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
+import arrow.core.nonEmptyListOf as nel
 
 class FilterExpressionTest :
   ShouldSpec({
@@ -100,8 +118,6 @@ class FilterExpressionTest :
 
     context("Valid filter expressions") {
       context("using a simple existence check") {
-        val at = Token.At(1U, 1U)
-
         val hasA = "@.a"
         val hasB = "@['b']"
         val has1 = "@[1]"
@@ -111,32 +127,32 @@ class FilterExpressionTest :
 
         should("compile successfully") {
           FilterExpression.compile(hasA) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.ChildSegment("a")), at),
+            Existence(
+              Relative(listOf(Segment.ChildSegment("a"))),
             )
 
           FilterExpression.compile(hasB) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.ChildSegment("b")), at),
+            Existence(
+              Relative(listOf(Segment.ChildSegment("b"))),
             )
 
           FilterExpression.compile(has1) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.ChildSegment(1)), at),
+            Existence(
+              Relative(listOf(Segment.ChildSegment(1))),
             )
           FilterExpression.compile(hasNestedA) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.DescendantSegment("a")), at),
+            Existence(
+              Relative(listOf(Segment.DescendantSegment("a"))),
             )
 
           FilterExpression.compile(hasNestedB) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.DescendantSegment("b")), at),
+            Existence(
+              Relative(listOf(Segment.DescendantSegment("b"))),
             )
 
           FilterExpression.compile(hasNested1) shouldBeRight
-            FilterExpression.Existence(
-              QueryExpression.Relative(listOf(Segment.DescendantSegment(1)), at),
+            Existence(
+              Relative(listOf(Segment.DescendantSegment(1))),
             )
         }
 
@@ -154,37 +170,37 @@ class FilterExpressionTest :
             val arr4 = jsonArrayOf(1)
 
             FilterExpression.compile(hasA).shouldBeRight().also {
-              it.match(obj1).shouldBeTrue()
-              it.match(obj2).shouldBeFalse()
-              it.match(obj3).shouldBeTrue()
-              it.match(objANull).shouldBeTrue()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeFalse()
-              it.match(arr3).shouldBeFalse()
-              it.match(arr4).shouldBeFalse()
+              it.test(obj1).shouldBeTrue()
+              it.test(obj2).shouldBeFalse()
+              it.test(obj3).shouldBeTrue()
+              it.test(objANull).shouldBeTrue()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeFalse()
+              it.test(arr3).shouldBeFalse()
+              it.test(arr4).shouldBeFalse()
             }
 
             FilterExpression.compile(hasB).shouldBeRight().also {
-              it.match(obj1).shouldBeFalse()
-              it.match(obj2).shouldBeTrue()
-              it.match(obj3).shouldBeTrue()
-              it.match(objANull).shouldBeFalse()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeFalse()
-              it.match(arr3).shouldBeFalse()
-              it.match(arr4).shouldBeFalse()
+              it.test(obj1).shouldBeFalse()
+              it.test(obj2).shouldBeTrue()
+              it.test(obj3).shouldBeTrue()
+              it.test(objANull).shouldBeFalse()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeFalse()
+              it.test(arr3).shouldBeFalse()
+              it.test(arr4).shouldBeFalse()
             }
 
             FilterExpression.compile(has1).shouldBeRight().also {
-              it.match(obj1).shouldBeFalse()
-              it.match(obj2).shouldBeFalse()
-              it.match(obj3).shouldBeFalse()
-              it.match(objANull).shouldBeFalse()
-              it.match(objName1).shouldBeFalse()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeTrue()
-              it.match(arr3).shouldBeTrue()
-              it.match(arr4).shouldBeFalse()
+              it.test(obj1).shouldBeFalse()
+              it.test(obj2).shouldBeFalse()
+              it.test(obj3).shouldBeFalse()
+              it.test(objANull).shouldBeFalse()
+              it.test(objName1).shouldBeFalse()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeTrue()
+              it.test(arr3).shouldBeTrue()
+              it.test(arr4).shouldBeFalse()
             }
           }
         }
@@ -211,43 +227,564 @@ class FilterExpressionTest :
             val arr4 = jsonArrayOf(jsonArrayOf("a", "b"))
 
             FilterExpression.compile(hasNestedA).shouldBeRight().also {
-              it.match(obj1).shouldBeTrue()
-              it.match(obj2).shouldBeTrue()
-              it.match(obj3).shouldBeTrue()
-              it.match(obj4).shouldBeTrue()
-              it.match(obj5).shouldBeTrue()
-              it.match(obj6).shouldBeFalse()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeTrue()
-              it.match(arr3).shouldBeFalse()
-              it.match(arr4).shouldBeFalse()
+              it.test(obj1).shouldBeTrue()
+              it.test(obj2).shouldBeTrue()
+              it.test(obj3).shouldBeTrue()
+              it.test(obj4).shouldBeTrue()
+              it.test(obj5).shouldBeTrue()
+              it.test(obj6).shouldBeFalse()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeTrue()
+              it.test(arr3).shouldBeFalse()
+              it.test(arr4).shouldBeFalse()
             }
 
             FilterExpression.compile(hasNestedB).shouldBeRight().also {
-              it.match(obj1).shouldBeFalse()
-              it.match(obj2).shouldBeTrue()
-              it.match(obj3).shouldBeTrue()
-              it.match(obj4).shouldBeFalse()
-              it.match(obj5).shouldBeTrue()
-              it.match(obj6).shouldBeTrue()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeFalse()
-              it.match(arr3).shouldBeFalse()
-              it.match(arr4).shouldBeFalse()
+              it.test(obj1).shouldBeFalse()
+              it.test(obj2).shouldBeTrue()
+              it.test(obj3).shouldBeTrue()
+              it.test(obj4).shouldBeFalse()
+              it.test(obj5).shouldBeTrue()
+              it.test(obj6).shouldBeTrue()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeFalse()
+              it.test(arr3).shouldBeFalse()
+              it.test(arr4).shouldBeFalse()
             }
 
             FilterExpression.compile(hasNested1).shouldBeRight().also {
-              it.match(obj1).shouldBeFalse()
-              it.match(obj2).shouldBeFalse()
-              it.match(obj3).shouldBeFalse()
-              it.match(obj4).shouldBeTrue()
-              it.match(obj5).shouldBeTrue()
-              it.match(obj6).shouldBeTrue()
-              it.match(arr1).shouldBeFalse()
-              it.match(arr2).shouldBeTrue()
-              it.match(arr3).shouldBeTrue()
-              it.match(arr4).shouldBeTrue()
+              it.test(obj1).shouldBeFalse()
+              it.test(obj2).shouldBeFalse()
+              it.test(obj3).shouldBeFalse()
+              it.test(obj4).shouldBeTrue()
+              it.test(obj5).shouldBeTrue()
+              it.test(obj6).shouldBeTrue()
+              it.test(arr1).shouldBeFalse()
+              it.test(arr2).shouldBeTrue()
+              it.test(arr3).shouldBeTrue()
+              it.test(arr4).shouldBeTrue()
             }
+          }
+        }
+      }
+    }
+
+    context("The and operator") {
+      context("when applied to two instances of And") {
+        should("return a single And instance concatenating the operands of both") {
+          val f1 =
+            Or(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          And(nel(f1, f2)) and And(nel(f3, f4)) shouldBe And(nel(f1, f2, f3, f4))
+          And(nel(f1, f3)) and And(nel(f2, f5, f4)) shouldBe And(nel(f1, f3, f2, f5, f4))
+          And(nel(f1, f3)) and And(nel(f2, f3, f5)) shouldBe And(nel(f1, f3, f2, f3, f5))
+        }
+      }
+
+      context("when only the left hand operand is an instance of And") {
+        should(
+          "return a single And instance appending the right hand operand to the operands of the left hand And",
+        ) {
+          val f1 =
+            Or(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          And(nel(f1, f2)) and f3 shouldBe And(nel(f1, f2, f3))
+          And(nel(f1, f3, f5)) and f4 shouldBe And(nel(f1, f3, f5, f4))
+          And(nel(f1, f3, f5, f2)) and f2 and f4 shouldBe And(nel(f1, f3, f5, f2, f2, f4))
+        }
+      }
+
+      context("when only the right hand operand is an instance of And") {
+        should(
+          "return a single And instance prepending the left hand operand to the operands of the right hand And",
+        ) {
+          val f1 =
+            Or(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          f3 and And(nel(f1, f2)) shouldBe And(nel(f3, f1, f2))
+          f4 and And(nel(f1, f3, f5)) shouldBe And(nel(f4, f1, f3, f5))
+          f2 and And(nel(f1, f3, f5, f2)) and f4 shouldBe And(nel(f2, f1, f3, f5, f2, f4))
+        }
+      }
+
+      context("when none of the operands is an instance of And") {
+        should("return an And instance containing both operands") {
+          val f1 =
+            Or(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          f1 and f2 shouldBe And(nonEmptyListOf(f1, f2))
+          f1 and f3 shouldBe And(nonEmptyListOf(f1, f3))
+          f2 and f3 shouldBe And(nonEmptyListOf(f2, f3))
+          f3 and f1 shouldBe And(nonEmptyListOf(f3, f1))
+          f3 and f2 and f1 shouldBe And(nonEmptyListOf(f3, f2, f1))
+        }
+      }
+    }
+
+    context("The or operator") {
+      context("when applied to two instances of Or") {
+        should("return a single Or instance concatenating the operands of both") {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          Or(nel(f1, f2)) or Or(nel(f3, f4)) shouldBe Or(nel(f1, f2, f3, f4))
+          Or(nel(f1, f3)) or Or(nel(f2, f5, f4)) shouldBe Or(nel(f1, f3, f2, f5, f4))
+          Or(nel(f1, f3)) or Or(nel(f2, f3, f5)) shouldBe Or(nel(f1, f3, f2, f3, f5))
+        }
+      }
+
+      context("when only the left hor operand is an instance of Or") {
+        should(
+          "return a single Or instance appending the right hor operand to the operands of the left hor Or",
+        ) {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          Or(nel(f1, f2)) or f3 shouldBe Or(nel(f1, f2, f3))
+          Or(nel(f1, f3, f5)) or f4 shouldBe Or(nel(f1, f3, f5, f4))
+          Or(nel(f1, f3, f5, f2)) or f2 or f4 shouldBe Or(nel(f1, f3, f5, f2, f2, f4))
+        }
+      }
+
+      context("when only the right hor operand is an instance of Or") {
+        should(
+          "return a single Or instance prepending the left hor operand to the operands of the right hor Or",
+        ) {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          f3 or Or(nel(f1, f2)) shouldBe Or(nel(f3, f1, f2))
+          f4 or Or(nel(f1, f3, f5)) shouldBe Or(nel(f4, f1, f3, f5))
+          f2 or Or(nel(f1, f3, f5, f2)) or f4 shouldBe Or(nel(f2, f1, f3, f5, f2, f4))
+        }
+      }
+
+      context("when none of the operands is an instance of Or") {
+        should("return an Or instance containing both operands") {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          f1 or f2 shouldBe Or(nonEmptyListOf(f1, f2))
+          f1 or f3 shouldBe Or(nonEmptyListOf(f1, f3))
+          f2 or f3 shouldBe Or(nonEmptyListOf(f2, f3))
+          f3 or f1 shouldBe Or(nonEmptyListOf(f3, f1))
+          f3 or f2 or f1 shouldBe Or(nonEmptyListOf(f3, f2, f1))
+        }
+      }
+    }
+
+    context("The not operator") {
+      context("when applied to an instance of Not") {
+        should("return the operand of Not") {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          !Not(f1) shouldBe f1
+          !Not(f2) shouldBe f2
+          !Not(f3) shouldBe f3
+        }
+      }
+
+      context("when applied to an instance of Comparison") {
+        should("invert the comparison operator") {
+          checkAll(Arb.comparable(), Arb.comparable()) { lhs, rhs ->
+            !Comparison(Op.EQ, lhs, rhs) shouldBe Comparison(Op.NOT_EQ, lhs, rhs)
+            !Comparison(Op.NOT_EQ, lhs, rhs) shouldBe Comparison(Op.EQ, lhs, rhs)
+            !Comparison(Op.LESS, lhs, rhs) shouldBe Comparison(Op.GREATER_EQ, lhs, rhs)
+            !Comparison(Op.LESS_EQ, lhs, rhs) shouldBe Comparison(Op.GREATER, lhs, rhs)
+            !Comparison(Op.GREATER, lhs, rhs) shouldBe Comparison(Op.LESS_EQ, lhs, rhs)
+            !Comparison(Op.GREATER_EQ, lhs, rhs) shouldBe Comparison(Op.LESS, lhs, rhs)
+          }
+        }
+      }
+
+      context("when the operand is not an instance of Not") {
+        should("return a Not instance of the operand") {
+          val f1 =
+            And(
+              nel(
+                Existence(Relative()["a"]),
+                Comparison(
+                  Op.LESS,
+                  Literal(1),
+                  Literal(2),
+                ),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          !f1 shouldBe Not(f1)
+          !f2 shouldBe Not(f2)
+          !f3 shouldBe Not(f3)
+        }
+      }
+    }
+
+    context("The toString method") {
+      context("of an And expression") {
+        should("concatenate the serialized operands with &&, parenthesizing Or instances") {
+          val f1 =
+            Or(
+              Existence(Relative()["a"]),
+              Comparison(
+                Op.LESS,
+                Literal(1),
+                Literal(2),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          And(f1, f2, f3, f4).toString() shouldBe "($f1) && $f2 && $f3 && $f4"
+          And(f5, f1, f2).toString() shouldBe "$f5 && ($f1) && $f2"
+          And(f3, f1).toString() shouldBe "$f3 && ($f1)"
+        }
+      }
+
+      context("of an Or expression") {
+        should("concatenate the serialized operands with ||") {
+          val f1 =
+            And(
+              Existence(Relative()["a"]),
+              Comparison(
+                Op.LESS,
+                Literal(1),
+                Literal(2),
+              ),
+            )
+
+          val f2 = Existence(Relative()["b"])
+
+          val f3 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f4 = Not(Existence(Absolute()["d"]))
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          Or(f1, f2, f3, f4).toString() shouldBe "$f1 || $f2 || $f3 || $f4"
+          Or(f5, f1, f2).toString() shouldBe "$f5 || $f1 || $f2"
+          Or(f3, f1).toString() shouldBe "$f3 || $f1"
+        }
+      }
+
+      context("of a Not expression") {
+        should(
+          "prepend an exclamation mark to the serialized operand, parenthesizing Or, Comparision and And",
+        ) {
+          val f1 =
+            And(
+              Existence(Relative()["a"]),
+              Comparison(
+                Op.LESS,
+                Literal(1),
+                Literal(2),
+              ),
+            )
+
+          val f2 =
+            Or(
+              Existence(Relative()["a"]),
+              Comparison(
+                Op.LESS,
+                Literal(1),
+                Literal(2),
+              ),
+            )
+
+          val f3 = Existence(Relative()["b"])
+
+          val f4 =
+            Match(
+              Relative()["c"],
+              Literal("a.*"),
+              true,
+            )
+
+          val f5 =
+            Comparison(
+              Op.GREATER,
+              Absolute()["e"],
+              Literal(2),
+            )
+
+          Not(f1).toString() shouldBe "!($f1)"
+          Not(f2).toString() shouldBe "!($f2)"
+          Not(f3).toString() shouldBe "!$f3"
+          Not(f4).toString() shouldBe "!$f4"
+          Not(f5).toString() shouldBe "!($f5)"
+        }
+      }
+
+      context("of an Existence expression") {
+        should("return the serialized query") {
+          checkAll(Arb.queryExpression()) {
+            Existence(it).toString() shouldBe it.toString()
+          }
+        }
+      }
+
+      context("of a Match expression") {
+        should("serialize to a match function expression if matchEntire = true") {
+          checkAll(Arb.matchOperand(), Arb.matchOperand()) { subject, pattern ->
+            Match(subject, pattern, matchEntire = true).toString() shouldBe
+              "match($subject, $pattern)"
+          }
+        }
+
+        should("serialize to a search function expression if matchEntire = false") {
+          checkAll(Arb.matchOperand(), Arb.matchOperand()) { subject, pattern ->
+            Match(subject, pattern, matchEntire = false).toString() shouldBe
+              "search($subject, $pattern)"
           }
         }
       }

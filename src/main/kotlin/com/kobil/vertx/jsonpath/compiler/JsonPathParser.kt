@@ -181,22 +181,23 @@ private fun ParserState.checkInt(number: Token.Integer): Int {
   return number.value
 }
 
-private fun ParserState.queryExpr(): QueryExpression =
+private fun ParserState.queryExpr(): Pair<QueryExpression<*>, Token> =
   when (val t = advance()) {
-    is Token.At -> QueryExpression.Relative(segments(), t)
-    is Token.Dollar -> QueryExpression.Absolute(segments(), t)
+    is Token.At -> QueryExpression.Relative(segments()) to t
+    is Token.Dollar -> QueryExpression.Absolute(segments()) to t
     else -> unexpectedToken(t, "query expression")
   }
 
 private inline fun <C : ComparableExpression> ParserState.functionExpr(
   identifier: Token.Identifier,
-  parse: ParserState.() -> C,
-  constructor: (C, Token?) -> ComparableExpression,
+  parse: ParserState.() -> Pair<C, Token>,
+  constructor: (C) -> ComparableExpression,
   requireSingular: Boolean = true,
 ): ComparableExpression {
   require<Token.LeftParen>("${identifier.value} function expression")
   skipWhiteSpace()
-  val expr = constructor(parse().also { if (requireSingular) checkSingular(it) }, identifier)
+  val expr =
+    constructor(parse().let { if (requireSingular) checkSingular(it) else it.first })
   skipWhiteSpace()
   require<Token.RightParen>("${identifier.value} function expression")
 
@@ -219,21 +220,21 @@ private fun ParserState.functionExpr(identifier: Token.Identifier): ComparableEx
     else -> raise(JsonPathError.UnknownFunction(name, identifier.line, identifier.column))
   }
 
-private fun ParserState.comparable(): ComparableExpression =
+private fun ParserState.comparable(): Pair<ComparableExpression, Token> =
   when (val t = advance()) {
-    is Token.Integer -> ComparableExpression.Literal(t.value, t)
-    is Token.Decimal -> ComparableExpression.Literal(t.value, t)
-    is Token.Str -> ComparableExpression.Literal(unescape(t), t)
+    is Token.Integer -> ComparableExpression.Literal(t.value) to t
+    is Token.Decimal -> ComparableExpression.Literal(t.value) to t
+    is Token.Str -> ComparableExpression.Literal(unescape(t)) to t
     is Token.Identifier ->
       when (t.value) {
-        "true" -> ComparableExpression.Literal(true, t)
-        "false" -> ComparableExpression.Literal(false, t)
-        "null" -> ComparableExpression.Literal(null, t)
+        "true" -> ComparableExpression.Literal(true)
+        "false" -> ComparableExpression.Literal(false)
+        "null" -> ComparableExpression.Literal(null)
         else -> functionExpr(t)
-      }
+      } to t
 
-    is Token.At -> QueryExpression.Relative(segments(), t)
-    is Token.Dollar -> QueryExpression.Absolute(segments(), t)
+    is Token.At -> QueryExpression.Relative(segments()) to t
+    is Token.Dollar -> QueryExpression.Absolute(segments()) to t
     else -> unexpectedToken(t, "comparable expression")
   }
 
@@ -269,7 +270,7 @@ private fun ParserState.matchOrSearchFunction(): FilterExpression {
   skipWhiteSpace()
   require<Token.RightParen>("$name function expression")
 
-  return FilterExpression.Match(firstArg, secondArg, name == "match", identifier)
+  return FilterExpression.Match(firstArg, secondArg, name == "match")
 }
 
 private fun ParserState.basicLogicalExpr(): FilterExpression {
@@ -283,18 +284,18 @@ private fun ParserState.basicLogicalExpr(): FilterExpression {
 
   if (matchOrSearch != null) return matchOrSearchFunction()
 
-  val lhs = comparable()
+  val (lhs, lhsToken) = comparable()
   skipWhiteSpace()
   val op = takeIf<Token.ComparisonOperator>()
 
   if (op != null) {
     skipWhiteSpace()
-    val rhs = comparable()
+    val (rhs, rhsToken) = comparable()
 
     return FilterExpression.Comparison(
       op.operator,
-      checkSingular(lhs),
-      checkSingular(rhs),
+      checkSingular(lhs, lhsToken),
+      checkSingular(rhs, rhsToken),
     )
   }
 
@@ -312,14 +313,19 @@ private fun ParserState.basicLogicalExpr(): FilterExpression {
   }
 }
 
-private fun Raise<JsonPathError.MustBeSingularQuery>.checkSingular(
-  expr: ComparableExpression,
-): ComparableExpression =
+private fun <C : ComparableExpression> Raise<JsonPathError.MustBeSingularQuery>.checkSingular(
+  expr: Pair<C, Token>,
+): C = checkSingular(expr.first, expr.second)
+
+private fun <C : ComparableExpression> Raise<JsonPathError.MustBeSingularQuery>.checkSingular(
+  expr: C,
+  token: Token,
+): C =
   expr.apply {
-    if (this is QueryExpression &&
+    if (this is QueryExpression<*> &&
       !isSingular
     ) {
-      raise(JsonPathError.MustBeSingularQuery(token!!.line, token!!.column))
+      raise(JsonPathError.MustBeSingularQuery(token.line, token.column))
     }
   }
 

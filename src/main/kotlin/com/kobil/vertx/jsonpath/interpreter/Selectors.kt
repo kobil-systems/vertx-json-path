@@ -2,6 +2,7 @@ package com.kobil.vertx.jsonpath.interpreter
 
 import com.kobil.vertx.jsonpath.JsonNode
 import com.kobil.vertx.jsonpath.Selector
+import com.kobil.vertx.jsonpath.get
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
@@ -84,14 +85,14 @@ internal fun Selector.Filter.select(
       value
         .asSequence()
         .map { (key, field) -> input.child(key, field) }
-        .filter { node -> filter.match(node, root) }
+        .filter { node -> filter.test(node, root) }
         .toList()
 
     is JsonArray ->
       value
         .asSequence()
         .mapIndexed { idx, item -> input.child(idx, item) }
-        .filter { node -> filter.match(node, root) }
+        .filter { node -> filter.test(node, root) }
         .toList()
 
     else -> emptyList()
