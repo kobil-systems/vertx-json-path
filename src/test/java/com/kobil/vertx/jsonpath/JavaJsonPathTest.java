@@ -1,7 +1,6 @@
 package com.kobil.vertx.jsonpath;
 
 import arrow.core.Either;
-import com.kobil.vertx.jsonpath.compiler.Token;
 import com.kobil.vertx.jsonpath.error.JsonPathError;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,8 +29,8 @@ public class JavaJsonPathTest {
     @Test
     @DisplayName("A call to the compile static method with an invalid JSON Path string should return a Left")
     public void failure() {
-        assertInstanceOf(
-                Token.QuestionMark.class,
+        assertEquals(
+                "QuestionMark",
                 assertInstanceOf(
                         JsonPathError.UnexpectedToken.class,
                         assertInstanceOf(Either.Left.class, JsonPath.compile("?.abc")).getValue()

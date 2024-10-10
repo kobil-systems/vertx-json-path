@@ -2,7 +2,7 @@ package com.kobil.vertx.jsonpath.compiler
 
 import com.kobil.vertx.jsonpath.FilterExpression
 
-sealed interface Token {
+internal sealed interface Token {
   val line: UInt
   val column: UInt
   val name: String

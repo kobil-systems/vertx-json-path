@@ -90,46 +90,6 @@ class ComparableExpressionTest :
       }
     }
 
-    context("The literal static function") {
-      context("applied to an integer") {
-        should("return a Literal with the same value") {
-          checkAll(Arb.int()) {
-            ComparableExpression.literal(it) shouldBe ComparableExpression.Literal(it)
-          }
-        }
-      }
-
-      context("applied to a floating point number") {
-        should("return a Literal with the same value") {
-          checkAll(Arb.double()) {
-            ComparableExpression.literal(it) shouldBe ComparableExpression.Literal(it)
-          }
-        }
-      }
-
-      context("applied to a string") {
-        should("return a Literal with the same value") {
-          checkAll(Arb.string()) {
-            ComparableExpression.literal(it) shouldBe ComparableExpression.Literal(it)
-          }
-        }
-      }
-
-      context("applied to a boolean") {
-        should("return a Literal with the same value") {
-          checkAll(Arb.boolean()) {
-            ComparableExpression.literal(it) shouldBe ComparableExpression.Literal(it)
-          }
-        }
-      }
-    }
-
-    context("The literalNull static function") {
-      should("return a Literal with null value") {
-        ComparableExpression.literalNull() shouldBe ComparableExpression.Literal(null)
-      }
-    }
-
     context("The toString method") {
       context("of a Literal instance") {
         should("wrap a string value in double quotes") {

@@ -1,7 +1,6 @@
 package com.kobil.vertx.jsonpath;
 
 import com.kobil.vertx.jsonpath.FilterExpression.Comparison;
-import com.kobil.vertx.jsonpath.FilterExpression.Existence;
 import com.kobil.vertx.jsonpath.FilterExpression.Not;
 import com.kobil.vertx.jsonpath.QueryExpression.Relative;
 import com.kobil.vertx.jsonpath.Segment.ChildSegment;
@@ -67,7 +66,7 @@ public class JavaSelectorTest {
     @Test
     @DisplayName("The filter static function should return a Filter selector with the given filter expression")
     public void filter() {
-        var expr1 = new Existence(new Relative(new ChildSegment("a")));
+        var expr1 = new FilterExpression.Test(new Relative(new ChildSegment("a")));
         var expr2 = new FilterExpression.Or(
                 nonEmptyListOf(
                         new Comparison(
@@ -75,7 +74,7 @@ public class JavaSelectorTest {
                                 new Relative(new ChildSegment("a")),
                                 new ComparableExpression.Literal(1)
                         ),
-                        new Not(new Existence(new Relative(new ChildSegment("a"))))
+                        new Not(new FilterExpression.Test(new Relative(new ChildSegment("a"))))
                 )
         );
 

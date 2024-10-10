@@ -5,10 +5,10 @@ import com.kobil.vertx.jsonpath.ComparableExpression.Literal
 import com.kobil.vertx.jsonpath.FilterExpression.And
 import com.kobil.vertx.jsonpath.FilterExpression.Comparison
 import com.kobil.vertx.jsonpath.FilterExpression.Comparison.Op
-import com.kobil.vertx.jsonpath.FilterExpression.Existence
 import com.kobil.vertx.jsonpath.FilterExpression.Match
 import com.kobil.vertx.jsonpath.FilterExpression.Not
 import com.kobil.vertx.jsonpath.FilterExpression.Or
+import com.kobil.vertx.jsonpath.FilterExpression.Test
 import com.kobil.vertx.jsonpath.QueryExpression.Absolute
 import com.kobil.vertx.jsonpath.QueryExpression.Relative
 import com.kobil.vertx.jsonpath.compiler.Token
@@ -127,31 +127,31 @@ class FilterExpressionTest :
 
         should("compile successfully") {
           FilterExpression.compile(hasA) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.ChildSegment("a"))),
             )
 
           FilterExpression.compile(hasB) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.ChildSegment("b"))),
             )
 
           FilterExpression.compile(has1) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.ChildSegment(1))),
             )
           FilterExpression.compile(hasNestedA) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.DescendantSegment("a"))),
             )
 
           FilterExpression.compile(hasNestedB) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.DescendantSegment("b"))),
             )
 
           FilterExpression.compile(hasNested1) shouldBeRight
-            Existence(
+            Test(
               Relative(listOf(Segment.DescendantSegment(1))),
             )
         }
@@ -275,7 +275,7 @@ class FilterExpressionTest :
           val f1 =
             Or(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -284,7 +284,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -293,7 +293,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -315,7 +315,7 @@ class FilterExpressionTest :
           val f1 =
             Or(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -324,7 +324,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -333,7 +333,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -355,7 +355,7 @@ class FilterExpressionTest :
           val f1 =
             Or(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -364,7 +364,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -373,7 +373,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -393,7 +393,7 @@ class FilterExpressionTest :
           val f1 =
             Or(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -402,7 +402,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -426,7 +426,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -435,7 +435,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -444,7 +444,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -466,7 +466,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -475,7 +475,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -484,7 +484,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -506,7 +506,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -515,7 +515,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -524,7 +524,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -544,7 +544,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -553,7 +553,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -577,7 +577,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -586,7 +586,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -619,7 +619,7 @@ class FilterExpressionTest :
           val f1 =
             And(
               nel(
-                Existence(Relative()["a"]),
+                Test(Relative()["a"]),
                 Comparison(
                   Op.LESS,
                   Literal(1),
@@ -628,7 +628,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -649,7 +649,7 @@ class FilterExpressionTest :
         should("concatenate the serialized operands with &&, parenthesizing Or instances") {
           val f1 =
             Or(
-              Existence(Relative()["a"]),
+              Test(Relative()["a"]),
               Comparison(
                 Op.LESS,
                 Literal(1),
@@ -657,7 +657,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -666,7 +666,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -685,7 +685,7 @@ class FilterExpressionTest :
         should("concatenate the serialized operands with ||") {
           val f1 =
             And(
-              Existence(Relative()["a"]),
+              Test(Relative()["a"]),
               Comparison(
                 Op.LESS,
                 Literal(1),
@@ -693,7 +693,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f2 = Existence(Relative()["b"])
+          val f2 = Test(Relative()["b"])
 
           val f3 =
             Match(
@@ -702,7 +702,7 @@ class FilterExpressionTest :
               true,
             )
 
-          val f4 = Not(Existence(Absolute()["d"]))
+          val f4 = Not(Test(Absolute()["d"]))
 
           val f5 =
             Comparison(
@@ -723,7 +723,7 @@ class FilterExpressionTest :
         ) {
           val f1 =
             And(
-              Existence(Relative()["a"]),
+              Test(Relative()["a"]),
               Comparison(
                 Op.LESS,
                 Literal(1),
@@ -733,7 +733,7 @@ class FilterExpressionTest :
 
           val f2 =
             Or(
-              Existence(Relative()["a"]),
+              Test(Relative()["a"]),
               Comparison(
                 Op.LESS,
                 Literal(1),
@@ -741,7 +741,7 @@ class FilterExpressionTest :
               ),
             )
 
-          val f3 = Existence(Relative()["b"])
+          val f3 = Test(Relative()["b"])
 
           val f4 =
             Match(
@@ -768,7 +768,7 @@ class FilterExpressionTest :
       context("of an Existence expression") {
         should("return the serialized query") {
           checkAll(Arb.queryExpression()) {
-            Existence(it).toString() shouldBe it.toString()
+            Test(it).toString() shouldBe it.toString()
           }
         }
       }

@@ -300,7 +300,7 @@ private fun ParserState.basicLogicalExpr(): FilterExpression {
   }
 
   return when (lhs) {
-    is NodeListExpression -> FilterExpression.Existence(lhs)
+    is NodeListExpression -> FilterExpression.Test(lhs)
     is ComparableExpression.Literal ->
       raise(
         JsonPathError.UnexpectedToken(current!!, "basic logical expression"),

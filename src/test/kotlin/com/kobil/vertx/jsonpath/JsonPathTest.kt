@@ -1,6 +1,6 @@
 package com.kobil.vertx.jsonpath
 
-import com.kobil.vertx.jsonpath.FilterExpression.Existence
+import com.kobil.vertx.jsonpath.FilterExpression.Test
 import com.kobil.vertx.jsonpath.JsonPath.Companion.onlyPaths
 import com.kobil.vertx.jsonpath.QueryExpression.Relative
 import com.kobil.vertx.jsonpath.Segment.ChildSegment
@@ -790,7 +790,7 @@ class JsonPathTest :
             val i = Selector.index(idx)
             val w = Selector.Wildcard
             val s = Selector.slice(first, last, step)
-            val f = Selector.filter(Existence(Relative()["a"]))
+            val f = Selector.filter(Test(Relative()["a"]))
 
             JsonPath[n].segments shouldBe
               listOf(

@@ -30,10 +30,12 @@ sealed interface JsonPathError {
     val startColumn: UInt,
   ) : JsonPathError {
     override fun toString(): String =
-      "${messagePrefix(
-        line,
-        column,
-      )}: Unterminated string literal starting at [$startLine:$startColumn]"
+      "${
+        messagePrefix(
+          line,
+          column,
+        )
+      }: Unterminated string literal starting at [$startLine:$startColumn]"
   }
 
   data class IntOutOfBounds(
@@ -42,21 +44,34 @@ sealed interface JsonPathError {
     val column: UInt,
   ) : JsonPathError {
     override fun toString(): String =
-      "${messagePrefix(
-        line,
-        column,
-      )}: Invalid integer value (Out of bounds)"
+      "${
+        messagePrefix(
+          line,
+          column,
+        )
+      }: Invalid integer value (Out of bounds)"
   }
 
   data class UnexpectedToken(
-    val token: Token,
+    val token: String,
+    val line: UInt,
+    val column: UInt,
     val parsing: String,
   ) : JsonPathError {
+    internal constructor(token: Token, parsing: String) : this(
+      token.name,
+      token.line,
+      token.column,
+      parsing
+    )
+
     override fun toString(): String =
-      "${messagePrefix(
-        token.line,
-        token.column,
-      )}: Unexpected token '${token.name}' while parsing $parsing"
+      "${
+        messagePrefix(
+          line,
+          column,
+        )
+      }: Unexpected token '$token' while parsing $parsing"
   }
 
   data class IllegalSelector(

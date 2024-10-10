@@ -22,7 +22,7 @@ fun FilterExpression.test(
     is FilterExpression.Or -> this@test.test(input, root)
     is FilterExpression.Not -> !operand.test(input, root)
     is FilterExpression.Comparison -> this@test.test(input, root)
-    is FilterExpression.Existence -> this@test.test(input, root)
+    is FilterExpression.Test -> this@test.test(input, root)
     is FilterExpression.Match -> this@test.test(input, root)
   }
 
@@ -59,7 +59,7 @@ internal fun FilterExpression.Comparison.test(
   }
 }
 
-internal fun FilterExpression.Existence.test(
+internal fun FilterExpression.Test.test(
   input: JsonNode,
   root: JsonNode,
 ): Boolean = query.evaluate(input, root).isNotEmpty()

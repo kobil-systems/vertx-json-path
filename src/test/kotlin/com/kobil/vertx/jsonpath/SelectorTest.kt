@@ -3,9 +3,9 @@ package com.kobil.vertx.jsonpath
 import arrow.core.nonEmptyListOf
 import com.kobil.vertx.jsonpath.ComparableExpression.Literal
 import com.kobil.vertx.jsonpath.FilterExpression.Comparison
-import com.kobil.vertx.jsonpath.FilterExpression.Existence
 import com.kobil.vertx.jsonpath.FilterExpression.Not
 import com.kobil.vertx.jsonpath.FilterExpression.Or
+import com.kobil.vertx.jsonpath.FilterExpression.Test
 import com.kobil.vertx.jsonpath.QueryExpression.Relative
 import com.kobil.vertx.jsonpath.Segment.ChildSegment
 import io.kotest.core.spec.style.ShouldSpec
@@ -80,7 +80,7 @@ class SelectorTest :
         should("return the serialized filter expression preceded by a question mark") {
           Selector
             .Filter(
-              Existence(
+              Test(
                 Relative(ChildSegment(Selector.Name("a"))),
               ),
             ).toString() shouldBe "?@['a']"
@@ -133,7 +133,7 @@ class SelectorTest :
 
       context("called on a filter expression") {
         should("return a filter selector with the given filter expression") {
-          val expr1 = Existence(Relative(ChildSegment("a")))
+          val expr1 = Test(Relative(ChildSegment("a")))
           val expr2 =
             Or(
               nonEmptyListOf(
@@ -142,7 +142,7 @@ class SelectorTest :
                   Relative(ChildSegment("a")),
                   Literal(1),
                 ),
-                Not(Existence(Relative(ChildSegment("a")))),
+                Not(Test(Relative(ChildSegment("a")))),
               ),
             )
 
@@ -198,7 +198,7 @@ class SelectorTest :
 
     context("the filter static function") {
       should("return a filter selector with the given filter expression") {
-        val expr1 = Existence(Relative(ChildSegment("a")))
+        val expr1 = Test(Relative(ChildSegment("a")))
         val expr2 =
           Or(
             nonEmptyListOf(
@@ -207,7 +207,7 @@ class SelectorTest :
                 Relative(ChildSegment("a")),
                 Literal(1),
               ),
-              Not(Existence(Relative(ChildSegment("a")))),
+              Not(Test(Relative(ChildSegment("a")))),
             ),
           )
 
