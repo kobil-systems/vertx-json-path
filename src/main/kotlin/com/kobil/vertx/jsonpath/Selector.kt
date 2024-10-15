@@ -12,6 +12,9 @@ sealed interface Selector {
   data class Name(
     val name: String,
   ) : Selector {
+    /**
+     * Serializes this selector to the corresponding JSON path representation
+     */
     override fun toString(): String = "'$name'"
   }
 
@@ -19,6 +22,9 @@ sealed interface Selector {
    * A selector matching everything.
    */
   data object Wildcard : Selector {
+    /**
+     * Serializes this selector to the corresponding JSON path representation
+     */
     override fun toString(): String = "*"
   }
 
@@ -30,6 +36,9 @@ sealed interface Selector {
   data class Index(
     val index: Int,
   ) : Selector {
+    /**
+     * Serializes this selector to the corresponding JSON path representation
+     */
     override fun toString(): String = "$index"
   }
 
@@ -59,6 +68,9 @@ sealed interface Selector {
     val last: Int?,
     val step: Int?,
   ) : Selector {
+    /**
+     * Serializes this selector to the corresponding JSON path representation
+     */
     override fun toString(): String =
       (first?.toString() ?: "") + ":" + (last?.toString() ?: "") + (step?.let { ":$it" } ?: "")
   }
@@ -71,6 +83,9 @@ sealed interface Selector {
   data class Filter(
     val filter: FilterExpression,
   ) : Selector {
+    /**
+     * Serializes this selector to the corresponding JSON path representation
+     */
     override fun toString(): String = "?$filter"
   }
 

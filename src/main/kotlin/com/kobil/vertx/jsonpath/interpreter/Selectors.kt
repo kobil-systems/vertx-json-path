@@ -6,9 +6,22 @@ import com.kobil.vertx.jsonpath.get
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
+/**
+ * Applies the selector to the given [input] node in the context of the [root] node. If
+ * any selector within the segments contains nested absolute queries, they are evaluated on [root].
+ *
+ * @receiver the selector to apply
+ * @param input the input node
+ * @param root the root node. When omitted, `input == root` is assumed.
+ * @return the resulting node list after the selector has been applied
+ *
+ * @see JsonNode
+ * @see Selector
+ */
+@JvmOverloads
 fun Selector.select(
   input: JsonNode,
-  root: JsonNode,
+  root: JsonNode = input,
 ): List<JsonNode> =
   when (this) {
     is Selector.Name -> select(input)

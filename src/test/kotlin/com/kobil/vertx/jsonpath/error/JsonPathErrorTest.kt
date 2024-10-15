@@ -4,7 +4,6 @@ import com.kobil.vertx.jsonpath.compiler.Token
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.property.checkAll
 import java.io.IOException
@@ -17,9 +16,6 @@ class JsonPathErrorTest :
         should("return the error wrapped in the exception") {
           val errors =
             listOf(
-              JsonPathError.UnexpectedError(IllegalArgumentException("a")),
-              JsonPathError.UnexpectedError(IllegalStateException("a")),
-              JsonPathError.UnexpectedError(NullPointerException("a")),
               JsonPathError.IllegalCharacter('a', 1U, 1U, "something"),
               JsonPathError.UnterminatedString(1U, 1U, 1U, 1U),
               JsonPathError.UnexpectedToken(Token.QuestionMark(1U, 1U), "something"),
@@ -62,9 +58,9 @@ class JsonPathErrorTest :
             )
 
           for (ex in exceptions) {
-            JsonPathError(ex)
-              .shouldBeInstanceOf<JsonPathError.UnexpectedError>()
-              .cause shouldBeSameInstanceAs ex
+            shouldThrow<IllegalStateException> {
+              JsonPathError(ex)
+            }.cause shouldBeSameInstanceAs ex
           }
         }
       }
@@ -73,7 +69,7 @@ class JsonPathErrorTest :
     context("The 'PrematureEof' error") {
       should("produce the correct message from toString") {
         checkAll<String, UInt, UInt> { expected, line, col ->
-          JsonPathError.PrematureEof(expected, line, col).toString() shouldBe
+          JsonPathError.UnexpectedEof(expected, line, col).toString() shouldBe
             "Error at [$line:$col]: Premature end of input, expected $expected"
         }
       }

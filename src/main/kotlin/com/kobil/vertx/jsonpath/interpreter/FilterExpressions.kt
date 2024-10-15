@@ -13,6 +13,19 @@ import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.get
 import java.util.regex.PatternSyntaxException
 
+/**
+ * Evaluates the filter expression on the given [input] node in the context of the [root] node. If
+ * the filter expression contains nested absolute queries, they are evaluated on [root].
+ *
+ * @receiver the filter expression
+ * @param input the input node
+ * @param root the root node. When omitted, `input == root` is assumed.
+ * @return true if the filter expression matches, false otherwise
+ *
+ * @see JsonNode
+ * @see FilterExpression
+ */
+@JvmOverloads
 fun FilterExpression.test(
   input: JsonNode,
   root: JsonNode = input,

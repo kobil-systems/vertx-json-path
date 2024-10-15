@@ -15,6 +15,9 @@ sealed interface FunctionExpression : ComparableExpression {
   data class Length(
     val arg: ComparableExpression,
   ) : FunctionExpression {
+    /**
+     * Returns the JSON path representation of this function expression.
+     */
     override fun toString(): String = "length($arg)"
   }
 
@@ -28,6 +31,9 @@ sealed interface FunctionExpression : ComparableExpression {
   data class Count(
     val arg: NodeListExpression,
   ) : FunctionExpression {
+    /**
+     * Returns the JSON path representation of this function expression.
+     */
     override fun toString(): String = "count($arg)"
   }
 
@@ -42,6 +48,9 @@ sealed interface FunctionExpression : ComparableExpression {
   data class Value(
     val arg: NodeListExpression,
   ) : FunctionExpression {
+    /**
+     * Returns the JSON path representation of this function expression.
+     */
     override fun toString(): String = "value($arg)"
   }
 }

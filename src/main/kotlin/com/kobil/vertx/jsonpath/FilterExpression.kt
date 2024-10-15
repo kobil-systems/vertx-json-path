@@ -15,7 +15,7 @@ import io.vertx.core.json.JsonObject
  * A base type for filter expressions which may be used in a filter selector,
  * or on its own as a predicate.
  */
-sealed interface FilterExpression {
+sealed class FilterExpression {
   /**
    * Tests whether this filter expression matches the given JSON object.
    *
@@ -87,7 +87,7 @@ sealed interface FilterExpression {
    */
   data class And(
     val operands: NonEmptyList<FilterExpression>,
-  ) : FilterExpression {
+  ) : FilterExpression() {
     /**
      * An alternative constructor, taking the operands as varargs.
      *
@@ -103,6 +103,9 @@ sealed interface FilterExpression {
       nonEmptyListOf(firstOperand, secondOperand, *moreOperands),
     )
 
+    /**
+     * Returns the JSON path representation of this And expression.
+     */
     override fun toString(): String =
       operands.joinToString(" && ") {
         if (it is Or) {
@@ -120,7 +123,7 @@ sealed interface FilterExpression {
    */
   data class Or(
     val operands: NonEmptyList<FilterExpression>,
-  ) : FilterExpression {
+  ) : FilterExpression() {
     /**
      * An alternative constructor, taking the operands as varargs.
      *
@@ -136,6 +139,9 @@ sealed interface FilterExpression {
       nonEmptyListOf(firstOperand, secondOperand, *moreOperands),
     )
 
+    /**
+     * Returns the JSON path representation of this Or expression.
+     */
     override fun toString(): String = operands.joinToString(" || ")
   }
 
@@ -146,7 +152,10 @@ sealed interface FilterExpression {
    */
   data class Not(
     val operand: FilterExpression,
-  ) : FilterExpression {
+  ) : FilterExpression() {
+    /**
+     * Returns the JSON path representation of this Not expression.
+     */
     override fun toString(): String =
       if (operand is Comparison || operand is And || operand is Or) {
         "!($operand)"
@@ -166,7 +175,7 @@ sealed interface FilterExpression {
     val op: Op,
     val lhs: ComparableExpression,
     val rhs: ComparableExpression,
-  ) : FilterExpression {
+  ) : FilterExpression() {
     /**
      * A comparison operator.
      *
@@ -175,11 +184,34 @@ sealed interface FilterExpression {
     enum class Op(
       val str: String,
     ) {
+      /**
+       * The '==' operator
+       */
       EQ("=="),
+
+      /**
+       * The '"="=' operator
+       */
       NOT_EQ("!="),
+
+      /**
+       * The '<' operator
+       */
       LESS("<"),
+
+      /**
+       * The '<=' operator
+       */
       LESS_EQ("<="),
+
+      /**
+       * The '>' operator
+       */
       GREATER(">"),
+
+      /**
+       * The '>=' operator
+       */
       GREATER_EQ(">="),
       ;
 
@@ -198,6 +230,9 @@ sealed interface FilterExpression {
           }
     }
 
+    /**
+     * Returns the JSON path representation of this comparison expression.
+     */
     override fun toString(): String = "$lhs ${op.str} $rhs"
 
     /**
@@ -289,7 +324,10 @@ sealed interface FilterExpression {
    */
   data class Test(
     val query: NodeListExpression,
-  ) : FilterExpression {
+  ) : FilterExpression() {
+    /**
+     * Returns the JSON path representation of this Test expression, i.e. the serialized query
+     */
     override fun toString(): String = "$query"
   }
 
@@ -308,7 +346,10 @@ sealed interface FilterExpression {
     val subject: ComparableExpression,
     val pattern: ComparableExpression,
     val matchEntire: Boolean,
-  ) : FilterExpression {
+  ) : FilterExpression() {
+    /**
+     * Returns the JSON path representation of this function expression.
+     */
     override fun toString(): String {
       val name = if (matchEntire) "match" else "search"
 

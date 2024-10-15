@@ -152,10 +152,16 @@ sealed interface ComparableExpression {
   /**
    * A literal expression, which may be an integer, floating point number, string,
    * boolean or `null`.
+   *
+   * @param value the literal value, can be any JSON value
    */
   data class Literal(
     val value: Any?,
   ) : ComparableExpression {
+    /**
+     * Returns the literal value as a string. If the value itself is a string, it is enclosed in
+     * double quotes.
+     */
     override fun toString(): String =
       when (value) {
         null -> "null"

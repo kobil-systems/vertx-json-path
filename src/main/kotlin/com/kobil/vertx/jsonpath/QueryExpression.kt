@@ -49,6 +49,9 @@ sealed interface QueryExpression<T : QueryExpression<T>> :
       override operator fun plus(additionalSegments: Iterable<Segment>): Relative =
         copy(segments = this.segments + additionalSegments)
 
+      /**
+       * Serializes this query to the corresponding string representation
+       */
       override fun toString(): String = segments.joinToString("", prefix = "@")
     }
 
@@ -78,6 +81,9 @@ sealed interface QueryExpression<T : QueryExpression<T>> :
       override operator fun plus(additionalSegments: Iterable<Segment>): Absolute =
         copy(segments = this.segments + additionalSegments)
 
+      /**
+       * Serializes this query to the corresponding string representation
+       */
       override fun toString(): String = segments.joinToString("", prefix = "$")
     }
 

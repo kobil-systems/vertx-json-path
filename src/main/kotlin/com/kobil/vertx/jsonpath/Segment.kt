@@ -74,6 +74,9 @@ sealed interface Segment {
         selectors.size == 1 &&
           (selectors.first() is Selector.Name || selectors.first() is Selector.Index)
 
+    /**
+     * Serializes this segment to the corresponding JSON path representation
+     */
     override fun toString(): String = selectors.joinToString(",", prefix = "[", postfix = "]")
   }
 
@@ -130,6 +133,9 @@ sealed interface Segment {
     override val isSingular: Boolean
       get() = false
 
+    /**
+     * Serializes this segment to the corresponding JSON path representation
+     */
     override fun toString(): String = selectors.joinToString(",", prefix = "..[", postfix = "]")
   }
 

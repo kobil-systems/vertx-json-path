@@ -282,7 +282,7 @@ private fun ScannerState.expect(
   if (advanceIf(next)) {
     ifMatch()
   } else if (isAtEnd()) {
-    raise(JsonPathError.PrematureEof("'$next'", line, column))
+    raise(JsonPathError.UnexpectedEof("'$next'", line, column))
   } else {
     raise(JsonPathError.IllegalCharacter(expr[current], line, column, "Expected '$next'"))
   }

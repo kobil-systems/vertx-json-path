@@ -1,14 +1,21 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
   kotlin("jvm") version "2.0.0"
 
+  `java-library`
+  `maven-publish`
+
   id("org.jetbrains.kotlinx.kover")
   id("org.sonarqube") version "3.5.0.2730"
+
+  id("org.jetbrains.dokka") version "1.9.20"
 
   id("org.jlleitschuh.gradle.ktlint")
 }
 
 group = "com.kobil.vertx"
-version = "1.0.0"
+version = "1.0.0-SNAPSHOT"
 
 repositories {
   mavenCentral()
@@ -53,7 +60,15 @@ tasks.test {
 }
 
 kotlin {
-  jvmToolchain(21)
+  jvmToolchain(17)
+
+  compilerOptions {
+    allWarningsAsErrors.set(true)
+  }
+}
+
+java {
+  withSourcesJar()
 }
 
 ktlint {
@@ -66,6 +81,57 @@ kover {
       excludes {
         classes("com.kobil.vertx.jsonpath.Build", "com.kobil.vertx.jsonpath.Compile")
       }
+    }
+  }
+}
+
+tasks.withType<DokkaTask>().configureEach {
+  suppressObviousFunctions.set(true)
+  failOnWarning.set(true)
+
+  dokkaSourceSets.configureEach {
+    reportUndocumented.set(true)
+  }
+}
+
+val dokkaJavadocJar: Jar by tasks.creating(Jar::class) {
+  group = "documentation"
+
+  dependsOn(tasks.dokkaJavadoc)
+  from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
+  archiveClassifier.set("javadoc")
+}
+
+tasks.assemble.configure {
+  dependsOn(dokkaJavadocJar)
+}
+
+val documentationElements: Configuration by configurations.creating {
+  outgoing {
+    artifact(dokkaJavadocJar) {
+      type = "jar"
+      classifier = "javadoc"
+      builtBy(dokkaJavadocJar)
+    }
+  }
+
+  attributes {
+    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class, Category.DOCUMENTATION))
+    attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling::class, Bundling.EXTERNAL))
+    attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType::class, DocsType.JAVADOC))
+    attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class, Usage.JAVA_RUNTIME))
+  }
+}
+
+components.getByName<AdhocComponentWithVariants>("java") {
+  addVariantsFromConfiguration(documentationElements) {}
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("vertx-json-path") {
+      artifactId = "vertx-json-path"
+      from(components["java"])
     }
   }
 }
